@@ -1,7 +1,7 @@
 import numpy as np
 import os
 import sys
-sys.path.insert(0, os.path.abspath('\\Users\dylan\Documents\GitHub\KaSeDy\pybot'))
+sys.path.insert(0, os.path.abspath('..//..//KaSeDy//pybot'))
 from tools.Map import Map
 
 from keras.models import Sequential
@@ -92,8 +92,7 @@ class MDP:
         f=lambda x:x
         self.state_formatter = f if state_formatter is None else state_formatter
 
-
-    def train(self,transition_model=None, immediate_returns=None, method='vi', gamma=0.9, theta=1e-10,alpha=0.8, terminal_states=[], in_place=True, initial_policy=None):
+    def train_offline(self, transition_model=None, immediate_returns=None, method='vi', gamma=0.9, theta=1e-10, alpha=0.8, terminal_states=[], in_place=True, initial_policy=None):
         method = method.strip().lower()
         if method in ['vi', 'pi' ] and (transition_model is None or immediate_returns is None):
             raise Exception(
@@ -116,7 +115,8 @@ class MDP:
     def q_matrix_update(self, state, action, reward, next_state):
         self.Q_matrix[state][action] += self.lr * (reward + self.gamma * max(self.Q_matrix[next_state]) - self.Q_matrix[state][action])
 
-    def _build_NN(self, num_inputs, num_hidden_neurons, num_hidden_layers=1, num_output_neurons=4, dropout_rate=0.2, lr=0.001, recurrent_layer=0, num_rnn_units=128, lookback=1, convolutional_layer=0, filters=16, kernel_size=2, l2_reg=0.7):
+    def _build_NN(self, num_inputs=None, num_hidden_neurons=10, num_hidden_layers=1, num_output_neurons=4, dropout_rate=0.2, lr=0.001, recurrent_layer=0, num_rnn_units=128, lookback=1, convolutional_layer=0, filters=16, kernel_size=2, l2_reg=0.7):
+        num_inputs = self.num_states if num_inputs is None else num_inputs
         model = Sequential()
         num_inputs = self.num_states if num_inputs is None else num_inputs
         if not recurrent_layer:
@@ -162,8 +162,9 @@ class MDP:
 
     def make_decision(self, state):
         state = self.state_formatter(state)
-
-        if self.policy_type == 'epsilon-greedy':
+        if self.policy_type =='random':
+            return np.random.choice(range(self.num_actions))
+        elif self.policy_type == 'epsilon-greedy':
             if np.random.rand() <= self.epsilon:
                 return np.random.choice(range(self.num_actions))
             if self.method in ['q-network','policy-network']:
@@ -304,7 +305,7 @@ class MDP:
             plt.pause(0.1)
             plt.show()
 
-    def evaluate_model(self, env, num_episodes, num_timesteps, show_env=1, show_graph=1, ax_env=None, ax_graph=None,
+    def evaluate_model(self, env, num_episodes, num_timesteps, show_env=0, show_graph=0, ax_env=None, ax_graph=None,
                        verbose=1):
         """
         :param mdp: MDP agent who's model is being evaluated
@@ -322,14 +323,14 @@ class MDP:
         episodes = range(num_episodes)
         timesteps = range(num_timesteps)
 
-        if show_env is int:
+        if type(show_env) is int:
             visualize = [[], list(episodes)][show_env]
         else:
             visualize = list(show_env)
         episode_list = visualize.copy()
         visualize_env = lambda x: x in episode_list
 
-        if show_graph is int:
+        if type(show_graph) is int:
             visualize = [[], list(episodes)][show_graph]
         else:
             visualize = list(show_graph)
@@ -352,12 +353,11 @@ class MDP:
                 if visualize_env(episode):
                     env.render()
                 if visualize_graph(episode):
-                    self.draw_graph(returns, ax_graph)
+                    self.draw_graph(returns, ax=ax_graph)
 
                 if done:
                     if verbose == 1:
-                        print('Episode {} finished after {} timesteps. Total reward {}'.format(episode, t,
-                                                                                               current_return))
+                        print('Episode {} finished after {} timesteps. Total reward {}'.format(episode, t, current_return))
                     current_return = 0
                     break
 
@@ -707,7 +707,7 @@ def map_q_test():
     transition_model = map.get_transition_model(noise=0)
     Q = np.random.random_sample((num_states, 4))
     mdp = MDP(init_Q_matrix=Q, epsilon=0.1)
-    mdp.train(method='q')
+    mdp.train_offline(method='q')
     prev_state = 0
     iteration = 0
     print('Iteration {}'.format(iteration))

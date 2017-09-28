@@ -16,12 +16,18 @@ def clean_state(state):
     tmp = state.split()[1::]
     tmp[-1] = state[-3] +'.'
     tmp= np.array(tmp, dtype=float)
-    orientation = tmp[-3::]
+    reading = tmp[-3::]
     one_hot = np.zeros(8)
-    index = int(orientation[0] + 2*orientation[1] + 4*orientation[2])
+    index = int(reading[0] + 2*reading[1] + 4*reading[2])
     one_hot[index] = 1
     return np.array(list(tmp[0:-3]) + list(one_hot), dtype=int)
-     
+    
+def reading_encoder(reading):
+    one_hot = np.zeros(8)
+    index = int(reading[0] + 2*reading[1] + 4*reading[2])
+    one_hot[index] = 1
+    return one_hot
+ 
 def sum_rewards(episodes):
     episodes = episodes.copy()
     episodes['Return'] = None
@@ -45,6 +51,9 @@ def state_formatter(full_state):
 
 def vanilla_state_formatter(state):
     return np.reshape(state, [-1, 21])
+
+def to_vanilla_state_formatter(state):
+    return np.reshape(np.append(np.append(state[0], state[1]), reading_encoder(state[2])), [-1,21])
 
 
 
@@ -219,9 +228,13 @@ update, action_gradient_holder = get_actor_update_operation(actor_model)
 sess.run(tf.global_variables_initializer())
 critic_model = critic_action_model()
 gradient_op = get_gradient_operation(critic_model)
-train_actor_critic_model(sess, actor_model, critic_model, data, 0.75, update, [action_gradient_holder, gradient_op], 25000, 5, True)
+train_actor_critic_model(sess, actor_model, critic_model, data, 0.75, update, [action_gradient_holder, gradient_op], 10000, 5, True)
 
 
 
 from MarkovDecisionProcess import MDP
-MDP.evaluate_maze_model(model=actor_model, policy_type=POLICY, method='policy-network', complex_input=0,state_formatter=vanilla_state_formatter )
+mdp = MDP(9,3,state_formatter=to_vanilla_state_formatter, method='policy-network', policy=POLICY, q_model=actor_model)
+from random_maze_environment import random_maze
+env = random_maze(3,1)
+mdp.evaluate_model(env, 200, 100)
+#MDP.evaluate_maze_model(model=actor_model, policy_type=POLICY, method='policy-network', complex_input=0,state_formatter=vanilla_state_formatter )

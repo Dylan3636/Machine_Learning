@@ -6,11 +6,11 @@ MOVEMENTS = ['LEFT_TURN', 'FORWARD', 'RIGHT_TURN']
 CARDINALS = ['N', 'E', 'W', 'S']
 
 class random_maze:
-    def __init__(self, length, num_colours,action_type=0, ax=None, noise=0, noise_type=0, init_position=None,init_orientation=None, end_position=None, auto_randomize=0.2, debug=0, save_data=1):
+    def __init__(self, length, num_colours, action_type=0, ax=None, noise=0, noise_type=0, init_position=None,init_orientation=None, end_position=None, auto_randomize=0.2, debug=0, save_data=0):
         self.length = length
         self.num_colours = num_colours
         self.action_type = action_type
-        self.actions = [CARDINALS, MOVEMENTS][action_type]
+        self.actions = [MOVEMENTS, CARDINALS][action_type]
         self.num_actions = len(self.actions)
         self.randomize = auto_randomize
         self.ax = plt.subplot(111) if ax is None else ax
@@ -30,11 +30,12 @@ class random_maze:
     def step(self, action):
         if self.action_type == 0:
             self.counter += 1
-            if action is int:
-                action = self.actions[action]
+            if hasattr(action, '__int__'):
+                action = self.actions[int(action)]
 
             prev_position = self.prev_position.copy()
             prev_orientation = self.prev_orientation.copy()
+
             if action == 'FORWARD':
                 card_action = get_cardinal(prev_orientation)
                 position = int(np.random.choice(self.maze.num_states, p=self.transition_model(card_action)[np.argmax(prev_position)]))
@@ -50,7 +51,7 @@ class random_maze:
                 reward = 1
                 done = 1
                 success = 1
-            elif self.counter == 3*self.maze:
+            elif self.counter == 3*self.maze.num_states:
                 reward = -1
                 done = 1
                 success = 0
@@ -69,9 +70,7 @@ class random_maze:
                 reward = -0.1
                 done = 0
                 success=2
-
-            yield ([current_position, current_orientation, current_readings], reward, done, ['Not Successful', 'Succesful', self.counter][success])
-
+            count = self.counter
             if done:
                 self.current_return += reward
                 self.prev_action = action
@@ -87,6 +86,8 @@ class random_maze:
                 self.prev_position = current_position.copy()
                 self.prev_orientation = current_orientation.copy()
                 self.current_return += reward
+
+            return [current_position, current_orientation, current_readings], reward, done, ['Not Successful', 'Succesful', count][success]
 
     def reset_state(self):
         self.prev_position = np.zeros(self.maze.num_states)
@@ -105,7 +106,7 @@ class random_maze:
 
     def render(self, debug_info =''):
         save_title = 'move_{}'.format(self.counter)
-        self.maze.show(actual_state=np.argmax(self.prev_position), orientation=np.argmax(self.prev_position), delay=0.05,
+        self.maze.show(actual_state=np.argmax(self.prev_position), orientation=np.argmax(self.prev_orientation), delay=0.05,
                  title='Current Score: {}\n Last Action Taken: {}\n Move: {}'.format(
                      self.current_return, self.prev_action,self.counter + '\n {}'.format(debug_info) if self.debug else ''
                  ), show=1, save=self.save_data,
@@ -119,10 +120,12 @@ class random_maze:
             orientation = np.zeros(4)
             orientation[np.random.choice(range(4))] = 1
             connected = self.maze.has_path(np.argmax(position), self.end_position)
-        self.prev_positon, self.prev_orientation = position, orientation
+        self.prev_position= position
+        self.prev_orientation = orientation
         return position, orientation
 
-    def randomize_maze(self, start, end, ax=None, delay=1.0, display=0):
+    def randomize_maze(self, start=0, end=None, ax=None, delay=1.0, display=0):
+        end = self.end_position if end is None else end
         connected = False
         length = self.length
         num_colours = self.num_colours
