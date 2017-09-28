@@ -101,6 +101,7 @@ class random_maze:
             self.randomize_maze(start=np.argmax(position), end=self.end_position)
         else:
             self.reset_state()
+        return [self.prev_position, self.prev_orientation, self.maze.get_sensor_readings(np.argmax(self.prev_position), np.argmax(self.prev_orientation))]
 
     def render(self, debug_info =''):
         save_title = 'move_{}'.format(self.counter)

@@ -69,9 +69,9 @@ scaler.fit([env.observation_space.high, env.observation_space.low])
 fig = plt.figure(1)
 returns = []
 timesteps_list=deque(maxlen=100)
+
 for episode in episodes:
     previous_observation = env.reset() # initial observation
-    #previous_observation = scaler.transform(np.reshape(previous_observation, (1, num_states)))
     done = 0
     for t in timesteps:
         if visualize[episode]:
@@ -92,13 +92,11 @@ for episode in episodes:
     returns.append(mdp.current_return)
     mdp.current_return=0
     timesteps_list.append(t)
-    # if mdp.epsilon*mdp.epsilon_decay<0.1:
-    #     mdp.epsilon = 0.1
-    # else:
-    mdp.epsilon = mdp.epsilon*mdp.epsilon_decay
+
     if visualize_graphs[episode]:
         ax = fig.add_subplot(1,1,1)
         draw_graph(returns=returns, ax=ax)
+
     if np.mean(timesteps_list) >= 195 and len(list(timesteps_list)) == 100:
         break
 

@@ -266,32 +266,100 @@ class MDP:
                     q = np.reshape(q, (-1, len(q)))
                     self.model.fit(state, q, batch_size=1, epochs=1, verbose=0)
 
-    def draw_graph(self, returns, success, iteration, fig, gs):
-        returns = np.array(returns)
-        success = np.array(success)
-        ax1 = fig.add_subplot(gs[0, 0])
-        ax2 = fig.add_subplot(gs[1, 0])
+    def draw_graph(self, returns, success=None, iteration=None, fig=None, gs=None, ax=None):
+        if success is not None:
+            returns = np.array(returns)
+            success = np.array(success)
+            ax1 = fig.add_subplot(gs[0, 0])
+            ax2 = fig.add_subplot(gs[1, 0])
 
-        ave_returns = [np.mean((returns[i - 50:i])) for i in range(50, len(returns), 1)]
-        ind = list(range(50, len(returns), 1))
-        ax1.cla()
-        ax1.plot(ind, np.array(ave_returns))
-        ax1.set_ylabel('Returns')
-        ax1.set_xlabel('Iteration')
+            ave_returns = [np.mean((returns[i - 50:i])) for i in range(50, len(returns), 1)]
+            ind = list(range(50, len(returns), 1))
+            ax1.cla()
+            ax1.plot(ind, np.array(ave_returns))
+            ax1.set_ylabel('Returns')
+            ax1.set_xlabel('Iteration')
 
-        percentage = [sum(1 == (success[(i - 100): i])) / 100 for i in range(50, len(success), 1)]
-        if len(percentage) != 0:
-            ind = list(range(50, len(success), 1))
-            ax2.cla()
-            ax2.plot(ind, percentage)
-            ax2.set_title('Percentage wins over past 100 iterations')
-            ax2.set_ylabel('Percentage')
-            ax2.set_xlabel('Iteration')
+            percentage = [sum(1 == (success[(i - 100): i])) / 100 for i in range(50, len(success), 1)]
+            if len(percentage) != 0:
+                ind = list(range(50, len(success), 1))
+                ax2.cla()
+                ax2.plot(ind, percentage)
+                ax2.set_title('Percentage wins over past 100 iterations')
+                ax2.set_ylabel('Percentage')
+                ax2.set_xlabel('Iteration')
 
-        plt.savefig('Media/Graphs/{}/iteration_{}_graph'.format(self.foldername, iteration))
-        plt.show()
-        fig.set_size_inches(18.5, 8)
-        plt.pause(0.1)
+            plt.savefig('Media/Graphs/{}/iteration_{}_graph'.format(self.foldername, iteration))
+            plt.show()
+            fig.set_size_inches(18.5, 8)
+            plt.pause(0.1)
+        else:
+            ax.cla()
+            returns = np.array(returns)
+            ave_returns = [np.mean((returns[i - 10:i])) for i in range(10, len(returns), 10)]
+            ind = list(range(10, len(returns), 10))
+            ax.plot(ind, ave_returns)
+            ax.set_ylabel('Returns')
+            ax.set_xlabel('Iteration')
+            plt.pause(0.1)
+            plt.show()
+
+    def evaluate_model(self, env, num_episodes, num_timesteps, show_env=1, show_graph=1, ax_env=None, ax_graph=None,
+                       verbose=1):
+        """
+        :param mdp: MDP agent who's model is being evaluated
+        :param env: Environment the model is being evaluated on
+        :param num_episodes: (int) Number of episodes to run for
+        :param num_timesteps: (int) Nunmber of steps in each episode
+        :param show_env(Boolean or list of integers): Flag indicating when and whether to render environment
+        :param show_graph(Boolean or list of integers): Flag indicatin whether or when to plot graph of average returns
+        :param ax_env axis to display environment on
+        :param ax_graph axis to display graph on
+        :param verbose: (int) Flag indicating what to print
+        :return:
+        """
+
+        episodes = range(num_episodes)
+        timesteps = range(num_timesteps)
+
+        if show_env is int:
+            visualize = [[], list(episodes)][show_env]
+        else:
+            visualize = list(show_env)
+        episode_list = visualize.copy()
+        visualize_env = lambda x: x in episode_list
+
+        if show_graph is int:
+            visualize = [[], list(episodes)][show_graph]
+        else:
+            visualize = list(show_graph)
+        episode_list_graph = visualize.copy()
+        visualize_graph = lambda x: x in episode_list_graph
+
+        current_return = 0
+        returns = []
+        for episode in episodes:
+            prev_observation = env.reset()
+
+            if visualize_env(episode):
+                env.render()
+            for t in timesteps:
+                action = self.make_decision(prev_observation)
+                observation, reward, done, _ = env.step(action)
+                current_return += reward
+                prev_observation = observation.copy()
+
+                if visualize_env(episode):
+                    env.render()
+                if visualize_graph(episode):
+                    self.draw_graph(returns, ax_graph)
+
+                if done:
+                    if verbose == 1:
+                        print('Episode {} finished after {} timesteps. Total reward {}'.format(episode, t,
+                                                                                               current_return))
+                    current_return = 0
+                    break
 
     @staticmethod
     def evaluate_maze_model(model=None, method='q-network', policy_type='softmax', train=0, complex_input=0, state_formatter = lambda x:x):
@@ -662,684 +730,6 @@ def map_q_test():
             mdp.q_matrix_update(prev_state, action, reward, current_state)
         prev_state = current_state
 
-
-def QRN_test():
-    num_colours = 2
-    num_states = 16
-    state_dim = num_states
-    num_actions = 4
-    lookback = 4
-
-    epsilon = 1.0
-    epsilon_decay = 0.99995
-    minimum_epsilon = 0.1
-
-    end_state = num_states-1
-    cardinals = ['N', 'E', 'S', 'W']
-
-    reward_vector = np.ones(num_states)*-1
-    reward_vector[num_states-1] = 0
-
-    show = 1
-    save = 1
-
-    model_num = 1
-
-    figsize = (18.5, 6)
-    gs = GridSpec(2, 2)
-
-    fig = plt.figure(1, figsize=figsize)
-    ax = fig.add_subplot(gs[:, 1])
-    map = generate_random_map(num_states, num_colours, 0, num_states-1, ax, delay=1 )
-
-    model = transition_model = map.get_transition_model(noise=0)
-
-    mdp = MDP(num_states=num_states, num_actions=num_actions, transition_model=model, immediate_rewards=reward_vector, lookback=lookback, recurrent_layer=True, num_inputs=state_dim + num_actions, num_rnn_units=128, num_hidden_neurons=[256, 512], num_hidden_layers=2, num_output_neurons=num_actions, epsilon=epsilon, epsilon_decay=epsilon_decay, network_type='Q')
-
-    prev_state = np.zeros(state_dim)
-    returns = []
-    save_titles = []
-
-    prev_full_states = deque(np.zeros([lookback+1, state_dim+num_actions]), maxlen=lookback+1)
-    prev_full_states.appendleft(np.append([prev_state], np.zeros(num_actions)))
-    success = []
-
-    for iteration in range(40000):
-
-        print('Iteration {}'.format(iteration))
-        show_graph = iteration in range(0, 50000, 100)
-        tmp = []
-        for i in range(200, 50000, 200):
-            tmp += list(range(i, i + 3))
-        visualize = iteration in tmp
-
-        for moves in range(31):
-
-            action = mdp.make_decision(np.reshape(list(prev_full_states), (1, lookback+1, state_dim+num_actions)))
-            card_action = cardinals[action]
-            current_state = int(np.random.choice(range(0, map.num_states), p=transition_model(card_action)[np.argmax(prev_state)]))
-            current_state = position_encoder(current_state, num_states)
-            encoded_action = action_encoder(card_action)
-
-            if visualize:
-                save_title = 'move_{}'.format(moves)
-                map.show(actual_state=np.argmax(current_state), delay=0.05, title='Iteration {}\n Current Score: {}\n Last Action Taken: {}\n Move: {}'.format(iteration, mdp.current_return, card_action, moves), show=show, save=save, save_title=save_title, fig=fig, figsize=figsize, ax=ax)
-                save_titles.append(save_title)
-
-            full_state = np.append([current_state], encoded_action)
-
-            if np.argmax(current_state) == end_state:
-                reward = 10
-                current_full_states = prev_full_states.copy()
-                current_full_states.append(full_state)
-                mdp.update(np.reshape(list(prev_full_states), (1, lookback+1, state_dim+num_actions)), action, reward, np.reshape(list(current_full_states), (1, lookback+1, state_dim+num_actions)))
-
-                if visualize:
-                    current_state = 0
-                else:
-                    connected = False
-                    while not connected:
-                        current_state = np.random.choice(range(map.num_states))
-                        connected = map.has_path(current_state, num_states - 1)
-
-                prev_full_states = current_full_states
-                prev_state = current_state
-
-                success.append(1)
-
-                break
-
-            elif moves == 30:
-                reward = -1
-                current_full_states = prev_full_states.copy()
-                current_full_states.append(full_state)
-                mdp.update(np.reshape(list(prev_full_states), (1, lookback + 1, state_dim + 4)), action, reward,
-                           np.reshape(list(current_full_states), (1, lookback + 1, state_dim + num_actions)))
-
-                if visualize:
-                    current_state = 0
-                else:
-                    connected = False
-                    while not connected:
-                        actual_state = np.random.choice(range(map.num_states))
-                        connected = map.has_path(actual_state, num_states - 1)
-
-                prev_full_states = current_full_states
-                prev_state = current_state
-
-                success.append(0)
-                break
-
-            elif not map.is_connected(np.argmax(current_state), np.argmax(prev_state), True):
-                reward = -2
-
-            else:
-                reward = -1
-
-            current_full_states = prev_full_states.copy()
-            current_full_states.append(full_state)
-            mdp.update(np.reshape(list(prev_full_states), (1, lookback + 1, state_dim + num_actions)), action, reward,
-                       np.reshape(list(current_full_states), (1, lookback + 1, state_dim + num_actions)))
-
-            prev_full_states = current_full_states
-            prev_state = current_state
-
-        if mdp.epsilon * mdp.epsilon_decay < minimum_epsilon:
-            mdp.epsilon = minimum_epsilon
-        else:
-            mdp.epsilon = mdp.epsilon * mdp.epsilon_decay
-
-        returns.append(mdp.current_return)
-        mdp.current_return = 0
-
-        if show_graph:
-            draw_graph(returns, success, iteration, fig, gs)
-
-        if visualize:
-            create_gif(image_titles=save_titles, num_states=num_states, iteration=iteration)
-
-        if iteration % 100 == 0:
-            map = generate_random_map(num_states, num_colours, 0, num_states - 1, ax, delay=0.5)
-            transition_model = map.get_transition_model(noise=0)
-
-        save_titles = []
-
-    mdp.model.save('qrn_{}_states_model_{}.h5'.format(num_states, model_num))
-    mdp.log.to_csv('qrn_model.csv')
-
-
-def QRN_2_test():
-    num_colours = 2
-    num_states = 16
-    state_dim = num_states + 4
-    num_actions = 3
-    lookback = 4
-
-    epsilon = 1.0
-    epsilon_decay = 0.9995
-    minimum_epsilon = 0.1
-
-    end_state = num_states-1
-    actions = ['LEFT_TURN', 'FORWARD', 'RIGHT_TURN']
-
-    reward_vector = np.ones(num_states)*-1
-    reward_vector[num_states-1] = 0
-
-    show = 1
-    save = 1
-    randomize = 0
-
-    model_num = 1
-
-    figsize = (18.5, 7)
-    gs = GridSpec(2, 2)
-
-    fig = plt.figure(1, figsize=figsize)
-    ax = fig.add_subplot(gs[:, 1])
-    map = generate_random_map(num_states, num_colours, 0, num_states-1, ax, delay=1 )
-
-    model = transition_model = map.get_transition_model(noise=0)
-
-    mdp = MDP(num_states=num_states, num_actions=num_actions, transition_model=model, immediate_rewards=reward_vector, lookback=lookback, recurrent_layer=True, num_inputs=state_dim + num_actions, num_rnn_units=128, num_hidden_neurons=[256, 512], num_hidden_layers=2, num_output_neurons=num_actions, epsilon=epsilon, epsilon_decay=epsilon_decay, network_type='Q')
-
-    prev_state = np.zeros(state_dim)
-    prev_state[num_states+1] = 1
-    prev_state[0] = 1
-    current_state = prev_state
-    returns = []
-    save_titles = []
-
-    prev_full_states = deque(np.zeros([lookback+1, state_dim+num_actions]), maxlen=lookback+1)
-    prev_full_states.appendleft(np.append([prev_state], np.zeros(num_actions)))
-    success = []
-
-    for iteration in range(40000):
-
-        print('Iteration {}'.format(iteration))
-        show_graph = iteration in range(0, 50000, 100)
-        tmp = []
-        for i in range(50, 50000, 50):
-            tmp += list(range(i, i + 3))
-        visualize = iteration in tmp
-
-        for moves in range(41):
-
-            action_index = mdp.make_decision(np.reshape(list(prev_full_states), (1, lookback+1, state_dim+num_actions)))
-            action = actions[action_index]
-            prev_position = prev_state[0:num_states]
-            if action == 'FORWARD':
-                card_action = action_to_cardinal(prev_state, num_states)
-                position = int(np.random.choice(range(0, map.num_states), p=transition_model(card_action)[np.argmax(prev_position)]))
-                current_state[num_states::] = prev_state[num_states::]
-                current_state[0:num_states] = position_encoder(position, num_states)
-            else:
-                orientation = get_orientation(action, prev_state, num_states)
-                current_state[0:num_states] = prev_state[0:num_states]
-                current_state[num_states::] = orientation
-            encoded_action = action_encoder(action, 1)
-            position = current_state[0:num_states]
-
-            if visualize:
-                save_title = 'move_{}'.format(moves)
-                orientation = current_state[num_states::]
-                map.show(actual_state=np.argmax(current_state), orientation=orientation, delay=0.05, title='Iteration {}\n Current Score: {}\n Last Action Taken: {}\n Move: {}'.format(iteration, mdp.current_return, action, moves), show=show, save=save, save_title=save_title, fig=fig, figsize=figsize, ax=ax)
-                save_titles.append(save_title)
-
-            full_state = np.append([current_state], encoded_action)
-
-            if np.argmax(current_state) == end_state:
-                reward = 10
-                current_full_states = prev_full_states.copy()
-                current_full_states.append(full_state)
-                mdp.update(np.reshape(list(prev_full_states), (1, lookback+1, state_dim+num_actions)), action_index, reward, np.reshape(list(current_full_states), (1, lookback+1, state_dim+num_actions)))
-
-                if visualize:
-                    current_state = np.zeros(state_dim)
-                    current_state[num_states + 1] = 1
-                    current_state[0] = 1
-                else:
-                    connected = False
-                    while not connected:
-                        current_state = np.zeros(state_dim)
-                        current_state[num_states + np.random.choice(range(4))] = 1
-                        index = np.random.choice(range(map.num_states))
-                        current_state[index] = 1
-                        connected = map.has_path(index, num_states - 1)
-
-                prev_full_states = current_full_states
-                prev_state = current_state
-
-                success.append(1)
-
-                break
-
-            elif moves == 40:
-                reward = -1
-                current_full_states = prev_full_states.copy()
-                current_full_states.append(full_state)
-                mdp.update(np.reshape(list(prev_full_states), (1, lookback + 1, state_dim + num_actions)), action_index, reward,
-                           np.reshape(list(current_full_states), (1, lookback + 1, state_dim + num_actions)))
-
-                if visualize:
-                    current_state = np.zeros(state_dim)
-                    current_state[num_states + 1] = 1
-                    current_state[0] = 1
-                else:
-                    connected = False
-                    while not connected:
-                        current_state = np.zeros(state_dim)
-                        current_state[num_states + np.random.choice(range(4))] = 1
-                        index = np.random.choice(range(map.num_states))
-                        current_state[index] = 1
-                        connected = map.has_path(index, num_states - 1)
-
-                prev_full_states = current_full_states
-                prev_state = current_state
-
-                success.append(0)
-                break
-
-            elif not map.is_connected(np.argmax(position), np.argmax(prev_position), True):
-                reward = -2
-
-            else:
-                reward = -1
-
-            current_full_states = prev_full_states.copy()
-            current_full_states.append(full_state)
-            mdp.update(np.reshape(list(prev_full_states), (1, lookback + 1, state_dim + num_actions)), action_index, reward,
-                       np.reshape(list(current_full_states), (1, lookback + 1, state_dim + num_actions)))
-
-            prev_full_states = current_full_states
-            prev_state = current_state
-
-        if mdp.epsilon * mdp.epsilon_decay < minimum_epsilon:
-            mdp.epsilon = minimum_epsilon
-        else:
-            mdp.epsilon = mdp.epsilon * mdp.epsilon_decay
-
-        returns.append(mdp.current_return)
-        mdp.current_return = 0
-
-        if show_graph:
-            draw_graph(returns, success, iteration, fig, gs)
-
-        if visualize:
-            create_gif(image_titles=save_titles, num_states=num_states, iteration=iteration)
-
-        if randomize and iteration % 100 == 0:
-            map = generate_random_map(num_states, num_colours, 0, num_states - 1, ax, delay=0.5)
-            transition_model = map.get_transition_model(noise=0)
-
-        save_titles = []
-
-    mdp.model.save('qrn_{}_states_model_{}.h5'.format(num_states, model_num))
-    mdp.log.to_csv('qrn_{}_states_model_{}.csv'.format(num_states, model_num))
-
-
-def QRN_3_test():
-    num_colours = 2
-    num_states = 9
-    state_dim = num_states + 4
-    num_actions = 3
-    lookback = 4
-
-    epsilon = 1
-    epsilon_decay = 0.9985
-    minimum_epsilon = 0.1
-
-    end_state = num_states-1
-    actions = ['LEFT_TURN', 'FORWARD', 'RIGHT_TURN']
-
-    reward_vector = np.ones(num_states)*-1
-    reward_vector[num_states-1] = 0
-
-    show = 1
-    save = 1
-    randomize = 0
-
-    model_num = 1
-
-    figsize = (18.5, 6)
-    gs = GridSpec(2, 2)
-
-    fig = plt.figure(1, figsize=figsize)
-    ax = fig.add_subplot(gs[:, 1])
-    map = generate_random_map(num_states, num_colours, 0, num_states-1, ax, delay=1 )
-
-    model = transition_model = map.get_transition_model(noise=0)
-
-    mdp = MDP(num_states=num_states, num_actions=num_actions, transition_model=model, immediate_rewards=reward_vector, lookback=lookback, recurrent_layer=True, num_inputs=state_dim + num_actions + 4, num_rnn_units=128, num_hidden_neurons=[256, 512], num_hidden_layers=2, num_output_neurons=num_actions, epsilon=epsilon, epsilon_decay=epsilon_decay, network_type='Q')
-
-    prev_state = np.zeros(state_dim)
-    prev_state[num_states+1] = 1
-    prev_state[0] = 1
-    current_state = prev_state
-    returns = []
-    save_titles = []
-
-    prev_full_states = deque(np.zeros([lookback+1, state_dim+num_actions+4]), maxlen=lookback+1)
-    prev_full_states.appendleft(np.append(np.append([prev_state], np.zeros(num_actions)), map.get_sensor_readings(np.argmax(prev_state))))
-    success = []
-
-    for iteration in range(40000):
-
-        print('Iteration {}'.format(iteration))
-        show_graph = iteration in range(0, 50000, 100)
-        tmp = []
-        for i in range(1000, 50000, 200):
-            tmp += list(range(i, i + 3))
-        visualize = iteration in tmp
-
-        for moves in range(41):
-
-            action_index = mdp.make_decision(np.reshape(list(prev_full_states), (1, lookback+1, state_dim+num_actions+4)))
-            action = actions[action_index]
-            prev_position = prev_state[0:num_states]
-            if action == 'FORWARD':
-                card_action = action_to_cardinal(prev_state, num_states)
-                position = int(np.random.choice(range(0, map.num_states), p=transition_model(card_action)[np.argmax(prev_position)]))
-                current_state[num_states::] = prev_state[num_states::]
-                current_state[0:num_states] = position_encoder(position, num_states)
-            else:
-                orientation = get_orientation(action, prev_state, num_states)
-                current_state[0:num_states] = prev_state[0:num_states]
-                current_state[num_states::] = orientation
-            encoded_action = action_encoder(action, 1)
-            position = current_state[0:num_states]
-            readings = map.get_sensor_readings(np.argmax(current_state[0:num_states]))
-
-            if visualize:
-                save_title = 'move_{}'.format(moves)
-                orientation = current_state[num_states::]
-                map.show(actual_state=np.argmax(current_state), orientation=orientation, delay=0.05, title='Iteration {}\n Current Score: {}\n Last Action Taken: {}\n Move: {}'.format(iteration, mdp.current_return, action, moves), show=show, save=save, save_title=save_title, fig=fig, figsize=figsize, ax=ax)
-                save_titles.append(save_title)
-
-            full_state = np.append(np.append([current_state], readings), encoded_action)
-
-            if np.argmax(current_state) == end_state:
-                reward = 50
-                current_full_states = prev_full_states.copy()
-                current_full_states.append(full_state)
-                mdp.update(np.reshape(list(prev_full_states), (1, lookback+1, state_dim+num_actions+4)), action_index, reward, np.reshape(list(current_full_states), (1, lookback+1, state_dim+num_actions+4)))
-
-                if visualize:
-                    current_state = np.zeros(state_dim)
-                    current_state[num_states + 1] = 1
-                    current_state[0] = 1
-                else:
-                    connected = False
-                    while not connected:
-                        current_state = np.zeros(state_dim)
-                        current_state[num_states + np.random.choice(range(4))] = 1
-                        index = np.random.choice(range(map.num_states))
-                        current_state[index] = 1
-                        connected = map.has_path(index, num_states - 1)
-
-                prev_full_states = current_full_states
-                prev_state = current_state
-
-                success.append(1)
-
-                break
-
-            elif moves == 40:
-                reward = -1
-                current_full_states = prev_full_states.copy()
-                current_full_states.append(full_state)
-                mdp.update(np.reshape(list(prev_full_states), (1, lookback + 1, state_dim + num_actions+4)), action_index, reward,
-                           np.reshape(list(current_full_states), (1, lookback + 1, state_dim + num_actions + 4)))
-
-                if visualize:
-                    current_state = np.zeros(state_dim)
-                    current_state[num_states + 1] = 1
-                    current_state[0] = 1
-                else:
-                    connected = False
-                    while not connected:
-                        current_state = np.zeros(state_dim)
-                        current_state[num_states + np.random.choice(range(4))] = 1
-                        index = np.random.choice(range(map.num_states))
-                        current_state[index] = 1
-                        connected = map.has_path(index, num_states - 1)
-
-                prev_full_states = current_full_states
-                prev_state = current_state
-
-                success.append(0)
-                break
-
-            elif not (map.is_connected(np.argmax(prev_position), np.argmax(position), True) or (np.argmax(prev_position) == np.argmax(position) and action != 'FORWARD')):
-                reward = -5
-
-            else:
-                reward = -1
-
-            current_full_states = prev_full_states.copy()
-            current_full_states.append(full_state)
-            mdp.update(np.reshape(list(prev_full_states), (1, lookback + 1, state_dim + num_actions+4)), action_index, reward,
-                       np.reshape(list(current_full_states),
-                                  (1, lookback + 1, state_dim + num_actions + 4)))
-
-            prev_full_states = current_full_states
-            prev_state = current_state
-
-        if mdp.epsilon * mdp.epsilon_decay < minimum_epsilon:
-            mdp.epsilon = minimum_epsilon
-        else:
-            mdp.epsilon = mdp.epsilon * mdp.epsilon_decay
-
-        returns.append(mdp.current_return)
-        mdp.current_return = 0
-
-        if show_graph:
-            draw_graph(returns, success, iteration, fig, gs)
-
-        if visualize:
-            create_gif(image_titles=save_titles, num_states=num_states, iteration=iteration)
-
-        if randomize and iteration % 100 == 0:
-            map = generate_random_map(num_states, num_colours, 0, num_states - 1, ax, delay=0.5)
-            transition_model = map.get_transition_model(noise=0)
-
-        save_titles = []
-
-    mdp.model.save('qrn_{}_states_model_{}.h5'.format(num_states, model_num))
-    mdp.log.to_csv('qrn_model.csv')
-def NN_Model(input_shape):
-    model = Sequential()
-    # model.add(Conv1D(16, 4, activation='relu'))
-    # model.add(MaxPooling1D(2))
-    # model.add(Conv1D(32, 3, activation='relu'))
-    # model.add(MaxPooling1D(2))
-    model.add(LSTM(30, recurrent_dropout=0.2, input_shape=input_shape, use_bias=1))
-    #model.add(Dropout(0.2))
-    #model.add(Dense(256, activation='relu'))
-    #model.add(Dropout(0.2))
-    #model.add(LSTM(100, recurrent_dropout=0.2))
-    model.add(Dense(3, activation='linear'))
-    model.compile('adam', 'mse', metrics=['accuracy'])
-    return model
-
-
-
-def QRN_4_test():
-    num_colours = 2
-    num_states = 9
-    state_dim = num_states + 4
-    num_actions = 3
-    num_sensors = 3
-    lookback = 15
-
-    epsilon = 0.75
-    epsilon_decay = 0.9998
-    minimum_epsilon = 0.2
-    dropout = 0.2
-
-    end_state = num_states-1
-    actions = ['LEFT_TURN', 'FORWARD', 'RIGHT_TURN']
-
-    reward_vector = np.ones(num_states)*-1
-    reward_vector[num_states-1] = 0
-
-    show = 1
-    save = 1
-    randomize = 1
-    replay = 1
-    batch_size = 1
-
-    model_num = 1
-
-    figsize = (18.5, 8)
-    gs = GridSpec(2, 2)
-
-    fig = plt.figure(1, figsize=figsize)
-    ax = fig.add_subplot(gs[:, 1])
-    map = generate_random_map(num_states, num_colours, 0, num_states-1, ax, delay=1 )
-
-    model = transition_model = map.get_transition_model(noise=0)
-
-    mdp = MDP(num_states=num_states, num_actions=num_actions, transition_model=model, immediate_rewards=reward_vector,q_model=NN_Model((lookback+1, state_dim+num_sensors)),
-              lookback=lookback, recurrent_layer=1, num_inputs=state_dim + num_sensors, num_rnn_units=100, num_hidden_layers=1, num_hidden_neurons=[256],
-              num_output_neurons=num_actions, convolutional_layer=1, filters=250, kernel_size=4, l2=0.001, gamma=0.75, lr=6e-1, epsilon=epsilon, epsilon_decay=epsilon_decay, network_type='Q')
-
-    prev_state = np.zeros(state_dim)
-    prev_state[num_states+1] = 1
-    prev_state[0] = 1
-    current_state = prev_state
-    returns = []
-    save_titles = []
-    prev_full_states = deque(np.zeros([lookback+1, state_dim+num_sensors]), maxlen=lookback+1)
-    prev_full_states.append(np.append(prev_state, map.get_sensor_readings(np.argmax(prev_state), orientation=np.argmax([0, 1, 0, 0]))))
-    success = []
-
-    for iteration in range(40000):
-        print('Iteration {}'.format(iteration))
-        show_graph = iteration in range(0, 50000, 100)
-        tmp = []
-        for i in range(200, 50000, 200):
-            tmp += list(range(i, i + 3))
-        visualize = iteration in tmp
-        for moves in range(51):
-            action_index = mdp.make_decision(np.reshape(list(prev_full_states), (1, len(prev_full_states), state_dim+num_sensors)))
-            action = actions[action_index]
-            prev_position = prev_state[0:num_states]
-            if action == 'FORWARD':
-                card_action = action_to_cardinal(prev_state, num_states)
-                position = int(np.random.choice(range(0, map.num_states), p=transition_model(card_action)[np.argmax(prev_position)]))
-                current_state[num_states::] = prev_state[num_states::]
-                current_state[0:num_states] = position_encoder(position, num_states)
-            else:
-                orientation = get_orientation(action, prev_state, num_states)
-                current_state[0:num_states] = prev_state[0:num_states]
-                current_state[num_states::] = orientation
-            position = current_state[0:num_states]
-            orientation = current_state[num_states::]
-            readings = map.get_sensor_readings(np.argmax(position), orientation=np.argmax(orientation))
-
-            if visualize:
-                save_title = 'move_{}'.format(moves)
-                orientation = current_state[num_states::]
-                map.show(actual_state=np.argmax(current_state), orientation=orientation, delay=0.05, title='Iteration {}\n Current Score: {}\n Last Action Taken: {}\n Move: {}'.format(iteration, mdp.current_return, action, moves), show=show, save=save, save_title=save_title, fig=fig, figsize=figsize, ax=ax)
-                save_titles.append(save_title)
-
-            full_state = np.append(current_state, readings)
-
-            if np.argmax(current_state) == end_state:
-                reward = 1
-                current_full_states = prev_full_states.copy()
-                current_full_states.append(full_state)
-                mdp.update(np.reshape(list(prev_full_states), (1, len(prev_full_states), state_dim+num_sensors)), action_index, reward, np.reshape(list(current_full_states), (1, len(current_full_states), state_dim+num_sensors)), replay=0, batch_size=20, dropout=0.1, completed=1)
-
-                if visualize:
-                    current_state = np.zeros(state_dim)
-                    current_state[num_states + 1] = 1
-                    current_state[0] = 1
-                else:
-                    connected = False
-                    while not connected:
-                        current_state = np.zeros(state_dim)
-                        current_state[num_states + np.random.choice(range(4))] = 1
-                        index = np.random.choice(range(map.num_states))
-                        current_state[index] = 1
-                        connected = map.has_path(index, num_states - 1)
-
-                prev_full_states = deque(np.zeros([lookback + 1, state_dim + num_sensors]), maxlen=lookback + 1)
-                prev_full_states.append(full_state)
-                prev_state = current_state
-
-                success.append(1)
-
-                break
-
-            elif moves == 50:
-                reward = -0.1
-                current_full_states = prev_full_states.copy()
-                current_full_states.append(full_state)
-                mdp.update(np.reshape(list(prev_full_states), (1, len(prev_full_states), state_dim +num_sensors)), action_index, reward,
-                           np.reshape(list(current_full_states), (1, len(current_full_states), state_dim + num_sensors)), replay=0, batch_size=50, minibatch_size=5, dropout=0.1)
-
-                if visualize:
-                    current_state = np.zeros(state_dim)
-                    current_state[num_states + 1] = 1
-                    current_state[0] = 1
-                else:
-                    connected = False
-                    while not connected:
-                        current_state = np.zeros(state_dim)
-                        current_state[num_states + np.random.choice(range(4))] = 1
-                        index = np.random.choice(range(map.num_states))
-                        current_state[index] = 1
-                        connected = map.has_path(index, num_states - 1)
-
-                prev_full_states = deque( np.zeros([lookback + 1, state_dim + num_sensors]), maxlen=lookback + 1)
-                prev_full_states.append(full_state)
-                prev_state = current_state
-
-                success.append(0)
-                break
-
-            elif not (map.is_connected(np.argmax(prev_position), np.argmax(position), True) or (np.argmax(prev_position) == np.argmax(position) and action != 'FORWARD')):
-                reward = -0.5
-
-            else:
-                if action == 'FORWARD':
-                    reward = -0.1
-                else:
-                    reward = -0.5
-
-            current_full_states = prev_full_states.copy()
-            current_full_states.append(full_state)
-            mdp.update(np.reshape(list(prev_full_states), (1, len(prev_full_states), state_dim +num_sensors)), action_index, reward,
-                       np.reshape(list(current_full_states),
-                                  (1, len(current_full_states), state_dim + num_sensors)), replay=0, batch_size=batch_size, dropout=dropout)
-
-            prev_full_states = current_full_states
-            prev_state = current_state
-
-        if mdp.epsilon * mdp.epsilon_decay < minimum_epsilon:
-            mdp.epsilon = minimum_epsilon
-        else:
-            mdp.epsilon = mdp.epsilon * mdp.epsilon_decay
-
-        returns.append(mdp.current_return)
-        mdp.current_return = 0
-
-        if show_graph:
-            mdp.draw_graph(returns, success, iteration, fig, gs)
-
-        if visualize:
-            mdp.create_gif(image_titles=save_titles, num_states=num_states, iteration=iteration)
-
-        if randomize and iteration % 10 == 0:
-            map = generate_random_map(num_states, num_colours, 0, num_states - 1, ax, delay=0.5)
-            transition_model = map.get_transition_model(noise=0)
-
-        save_titles = []
-
-    mdp.model.save('qrn_{}_states_model_{}.h5'.format(num_states, model_num))
-    mdp.log.to_csv('qrn_model.csv')
-
 def Q_test_2():
     num_colours = 2
     num_states = 9
@@ -1637,183 +1027,6 @@ def random_agent():
 
     log.to_csv('random_model.csv', index=False)
 
-def DQN_5_test():
-    num_colours = 2
-    num_states = 9
-    state_dim = num_states + 4
-    num_actions = 3
-    num_sensors = 3
-    lookback = 15
-
-    epsilon = 0.75
-    epsilon_decay = 0.9998
-    minimum_epsilon = 0.2
-    dropout = 0.2
-
-    end_state = num_states-1
-    actions = ['LEFT_TURN', 'FORWARD', 'RIGHT_TURN']
-
-    reward_vector = np.ones(num_states)*-1
-    reward_vector[num_states-1] = 0
-
-    show = 1
-    save = 1
-    randomize = 1
-    replay = 1
-    batch_size = 1
-
-    model_num = 1
-
-    figsize = (18.5, 8)
-    gs = GridSpec(2, 2)
-
-    fig = plt.figure(1, figsize=figsize)
-    ax = fig.add_subplot(gs[:, 1])
-    map = generate_random_map(num_states, num_colours, 0, num_states-1, ax, delay=1 )
-
-    model = transition_model = map.get_transition_model(noise=0)
-
-    mdp = MDP(num_states=num_states, num_actions=num_actions, transition_model=model, immediate_rewards=reward_vector,q_model=NN_Model((lookback+1, state_dim+num_sensors)),
-              lookback=lookback, recurrent_layer=1, num_inputs=state_dim + num_sensors, num_rnn_units=100, num_hidden_layers=1, num_hidden_neurons=[256],
-              num_output_neurons=num_actions, convolutional_layer=1, filters=250, kernel_size=4, l2=0.001, gamma=0.75, lr=6e-1, epsilon=epsilon, epsilon_decay=epsilon_decay, network_type='Q')
-
-    prev_state = np.zeros(state_dim)
-    prev_state[num_states+1] = 1
-    prev_state[0] = 1
-    current_state = prev_state
-    returns = []
-    save_titles = []
-    success = []
-
-
-    for iteration in range(40000):
-        print('Iteration {}'.format(iteration))
-        show_graph = iteration in range(0, 50000, 100)
-        tmp = []
-        for i in range(200, 50000, 200):
-            tmp += list(range(i, i + 3))
-        visualize = iteration in tmp
-        for moves in range(51):
-            action_index = mdp.make_decision(np.reshape(list(prev_full_states), (1, len(prev_full_states), state_dim+num_sensors)))
-            action = actions[action_index]
-            prev_position = prev_state[0:num_states]
-            if action == 'FORWARD':
-                card_action = action_to_cardinal(prev_state, num_states)
-                position = int(np.random.choice(range(0, map.num_states), p=transition_model(card_action)[np.argmax(prev_position)]))
-                current_state[num_states::] = prev_state[num_states::]
-                current_state[0:num_states] = position_encoder(position, num_states)
-            else:
-                orientation = get_orientation(action, prev_state, num_states)
-                current_state[0:num_states] = prev_state[0:num_states]
-                current_state[num_states::] = orientation
-            position = current_state[0:num_states]
-            orientation = current_state[num_states::]
-            readings = map.get_sensor_readings(np.argmax(position), orientation=np.argmax(orientation))
-
-            if visualize:
-                save_title = 'move_{}'.format(moves)
-                orientation = current_state[num_states::]
-                map.show(actual_state=np.argmax(current_state), orientation=orientation, delay=0.05, title='Iteration {}\n Current Score: {}\n Last Action Taken: {}\n Move: {}'.format(iteration, mdp.current_return, action, moves), show=show, save=save, save_title=save_title, fig=fig, figsize=figsize, ax=ax)
-                save_titles.append(save_title)
-
-            full_state = np.append(current_state, readings)
-
-            if np.argmax(current_state) == end_state:
-                reward = 1
-                current_full_states = prev_full_states.copy()
-                current_full_states.append(full_state)
-                mdp.update(np.reshape(list(prev_full_states), (1, len(prev_full_states), state_dim+num_sensors)), action_index, reward, np.reshape(list(current_full_states), (1, len(current_full_states), state_dim+num_sensors)), replay=0, batch_size=20, dropout=0.1, completed=1)
-
-                if visualize:
-                    current_state = np.zeros(state_dim)
-                    current_state[num_states + 1] = 1
-                    current_state[0] = 1
-                else:
-                    connected = False
-                    while not connected:
-                        current_state = np.zeros(state_dim)
-                        current_state[num_states + np.random.choice(range(4))] = 1
-                        index = np.random.choice(range(map.num_states))
-                        current_state[index] = 1
-                        connected = map.has_path(index, num_states - 1)
-
-                prev_full_states = deque(np.zeros([lookback + 1, state_dim + num_sensors]), maxlen=lookback + 1)
-                prev_full_states.append(full_state)
-                prev_state = current_state
-
-                success.append(1)
-
-                break
-
-            elif moves == 50:
-                reward = -0.1
-                current_full_states = prev_full_states.copy()
-                current_full_states.append(full_state)
-                mdp.update(np.reshape(list(prev_full_states), (1, len(prev_full_states), state_dim +num_sensors)), action_index, reward,
-                           np.reshape(list(current_full_states), (1, len(current_full_states), state_dim + num_sensors)), replay=0, batch_size=50, minibatch_size=5, dropout=0.1)
-
-                if visualize:
-                    current_state = np.zeros(state_dim)
-                    current_state[num_states + 1] = 1
-                    current_state[0] = 1
-                else:
-                    connected = False
-                    while not connected:
-                        current_state = np.zeros(state_dim)
-                        current_state[num_states + np.random.choice(range(4))] = 1
-                        index = np.random.choice(range(map.num_states))
-                        current_state[index] = 1
-                        connected = map.has_path(index, num_states - 1)
-
-                prev_full_states = deque( np.zeros([lookback + 1, state_dim + num_sensors]), maxlen=lookback + 1)
-                prev_full_states.append(full_state)
-                prev_state = current_state
-
-                success.append(0)
-                break
-
-            elif not (map.is_connected(np.argmax(prev_position), np.argmax(position), True) or (np.argmax(prev_position) == np.argmax(position) and action != 'FORWARD')):
-                reward = -0.5
-
-            else:
-                if action == 'FORWARD':
-                    reward = -0.1
-                else:
-                    reward = -0.5
-
-            current_full_states = prev_full_states.copy()
-            current_full_states.append(full_state)
-            mdp.update(np.reshape(list(prev_full_states), (1, len(prev_full_states), state_dim +num_sensors)), action_index, reward,
-                       np.reshape(list(current_full_states),
-                                  (1, len(current_full_states), state_dim + num_sensors)), replay=0, batch_size=batch_size, dropout=dropout)
-
-            prev_full_states = current_full_states
-            prev_state = current_state
-
-        if mdp.epsilon * mdp.epsilon_decay < minimum_epsilon:
-            mdp.epsilon = minimum_epsilon
-        else:
-            mdp.epsilon = mdp.epsilon * mdp.epsilon_decay
-
-        returns.append(mdp.current_return)
-        mdp.current_return = 0
-
-        if show_graph:
-            mdp.draw_graph(returns, success, iteration, fig, gs)
-
-        if visualize:
-            mdp.create_gif(image_titles=save_titles, num_states=num_states, iteration=iteration)
-
-        if randomize and iteration % 10 == 0:
-            map = generate_random_map(num_states, num_colours, 0, num_states - 1, ax, delay=0.5)
-            transition_model = map.get_transition_model(noise=0)
-
-        save_titles = []
-
-    mdp.model.save('qrn_{}_states_model_{}.h5'.format(num_states, model_num))
-    mdp.log.to_csv('qrn_model.csv')
-
-
 def readings_encoder(readings):
     tmp = np.zeros(8)
     index = int(readings[0] + 2*readings[1] + 4*readings[2])
@@ -1844,7 +1057,6 @@ def action_to_cardinal(prev_state, num_states):
         return 'E'
     if orientation[3]:
         return 'S'
-
 
 
 def get_orientation(action, prev_state, num_states):
