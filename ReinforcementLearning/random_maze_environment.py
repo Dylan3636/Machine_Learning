@@ -14,8 +14,10 @@ class random_maze:
         self.actions = [MOVEMENTS, CARDINALS][action_type]
         self.num_actions = len(self.actions)
         self.randomize = auto_randomize
-        self.ax = ax
+        self.ax = plt.subplot(111) if ax is None else ax
         self.maze = Map.random_grid_map(length=length, num_colours=num_colours)
+        self.noise = noise
+        self.noise_type = noise_type
         self.transition_model = self.maze.get_transition_model(noise=noise, noise_type=noise_type)
         self.start_position = 0
         self.end_position = self.maze.num_states-1 if end_position is None else end_position
@@ -31,7 +33,9 @@ class random_maze:
     def step(self, action):
         if self.action_type == 0:
             self.counter += 1
-            if hasattr(action, '__int__'):
+            if type(action) is str:
+                pass
+            else:
                 action = self.actions[int(action)]
 
             prev_position = self.prev_position.copy()
@@ -74,7 +78,7 @@ class random_maze:
             count = self.counter
             if done:
                 self.current_return += reward
-                self.prev_action = action
+                self.prev_action = 'Start'
                 if np.random.rand()<self.randomize:
                     position, _ = self.randomize_state()
                     self.randomize_maze(start=np.argmax(position),end= self.end_position )
@@ -87,7 +91,8 @@ class random_maze:
                 self.prev_position = current_position.copy()
                 self.prev_orientation = current_orientation.copy()
                 self.current_return += reward
-
+                if self.debug:
+                    print([prev_position, current_readings, current_position, action])
             return [current_position, current_orientation, current_readings], reward, done, ['Not Successful', 'Succesful', count][success]
 
     def reset_state(self):
@@ -107,7 +112,7 @@ class random_maze:
 
     def render(self, debug_info =''):
         save_title = 'move_{}'.format(self.counter)
-        self.maze.show(actual_state=np.argmax(self.prev_position), orientation=np.argmax(self.prev_orientation), delay=0.05,
+        self.maze.show(actual_state=np.argmax(self.prev_position), orientation=np.argmax(self.prev_orientation), delay=0.5,
                  title='Current Score: {}\n Last Action Taken: {}\n Move: {}'.format(
                      self.current_return, self.prev_action,self.counter + '\n {}'.format(debug_info) if self.debug else ''
                  ), show=1, save=self.save_data,
@@ -127,10 +132,10 @@ class random_maze:
 
     def randomize_maze(self, start=0, end=None, ax=None, delay=1.0, display=0):
         end = self.end_position if end is None else end
-        connected = False
         length = self.length
         num_colours = self.num_colours
         ax = self.ax if ax is None else ax
+        connected = False
         while not connected:
             maze = Map.random_grid_map(num_colours, length)
             maze.show(delay=delay,ax=ax, show=display)
@@ -138,6 +143,7 @@ class random_maze:
                 ax.cla()
             connected = maze.has_path(start, end)
         self.maze = maze
+        self.transition_model = maze.get_transition_model(noise=self.noise, noise_type=self.noise_type)
         return maze
 
     def position_encoder(self, position):
