@@ -305,8 +305,8 @@ class MDP:
             plt.pause(0.1)
             plt.show()
 
-    def evaluate_model(self, env, num_episodes, num_timesteps, show_env=0, show_graph=0, ax_env=None, ax_graph=None,
-                       verbose=1):
+    def evaluate_model_in_environment(self, env, num_episodes, num_timesteps, show_env=0, show_graph=0, ax_env=None, ax_graph=None,
+                                      verbose=1):
         """
         :param mdp: MDP agent who's model is being evaluated
         :param env: Environment the model is being evaluated on
@@ -322,6 +322,8 @@ class MDP:
 
         episodes = range(num_episodes)
         timesteps = range(num_timesteps)
+        returns_list = deque(maxlen=100)
+        average_returns = []
 
         if type(show_env) is int:
             visualize = [[], list(episodes)][show_env]
@@ -354,12 +356,14 @@ class MDP:
                     env.render()
                 if visualize_graph(episode):
                     self.draw_graph(returns, ax=ax_graph)
-
                 if done:
+                    returns_list.append(current_return)
+                    returns.append(current_return)
                     if verbose == 1:
-                        print('Episode {} finished after {} timesteps. Total reward {}'.format(episode, t, current_return))
+                        print('Episode {} finished after {} timesteps. Total reward {}. Average return over past 100 episodes {}'.format(episode, t, current_return, np.mean(list(returns_list))))
                     current_return = 0
                     break
+        print('Average return: {.3f} +/- {.5f}'.format(np.mean(returns), np.std(returns)))
 
     @staticmethod
     def evaluate_maze_model(model=None, method='q-network', policy_type='softmax', train=0, complex_input=0, state_formatter = lambda x:x):
@@ -573,7 +577,6 @@ class MDP:
                     values[i] = new_v
             if not in_place:
                 values = new_values
-            # print values
             if delta < theta:
                 break
         return values, policy
