@@ -1,19 +1,21 @@
 from tools.Map import Map
 import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 
 MOVEMENTS = ['LEFT_TURN', 'FORWARD', 'RIGHT_TURN']
 CARDINALS = ['N', 'E', 'W', 'S']
 
 class random_maze:
-    def __init__(self, length, num_colours, action_type=0, ax=None, noise=0, noise_type=0, init_position=None,init_orientation=None, end_position=None, auto_randomize=0.2, debug=0, save_data=0):
+    def __init__(self, length, num_colours, action_type=0, ax=None, noise=0, noise_type=0, init_position=None,init_orientation=None, end_position=None, auto_randomize=0.2, debug=0, save_data=0, display=0):
         self.length = length
         self.num_colours = num_colours
         self.action_type = action_type
         self.actions = [MOVEMENTS, CARDINALS][action_type]
         self.num_actions = len(self.actions)
         self.randomize = auto_randomize
-        plt.ioff()
+        if not display:
+            plt.ioff(); matplotlib.use('Agg')
         self.ax = plt.subplot(111) if ax is None else ax
         self.maze = Map.random_grid_map(length=length, num_colours=num_colours)
         self.transition_model = self.maze.get_transition_model(noise=noise, noise_type=noise_type)
