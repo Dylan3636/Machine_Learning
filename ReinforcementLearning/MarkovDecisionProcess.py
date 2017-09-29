@@ -2,7 +2,6 @@ import numpy as np
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..//..//KaSeDy//pybot'))
-print(sys.path)
 from tools.Map import Map
 
 from keras.models import Sequential

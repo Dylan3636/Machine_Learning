@@ -11,7 +11,10 @@ import numpy as np
 DEBUG = 1
 POLICY = 'softmax'
 BATCH_SIZE = 5
+ITERATIONS = 200
 LR = .5e-3
+NUM_STEPS = 50
+NUM_EPISODES = 100
 DISPLAY=0
 def clean_state(state):
     tmp = state.split()[1::]
@@ -229,7 +232,7 @@ update, action_gradient_holder = get_actor_update_operation(actor_model)
 sess.run(tf.global_variables_initializer())
 critic_model = critic_action_model()
 gradient_op = get_gradient_operation(critic_model)
-train_actor_critic_model(sess, actor_model, critic_model, data, 0.75, update, [action_gradient_holder, gradient_op], 200, 5, True)
+train_actor_critic_model(sess, actor_model, critic_model, data, 0.75, update, [action_gradient_holder, gradient_op], ITERATIONS, BATCH_SIZE, True)
 
 
 import matplotlib
@@ -239,5 +242,5 @@ from MarkovDecisionProcess import MDP
 mdp = MDP(9,3,state_formatter=to_vanilla_state_formatter, method='policy-network', policy=POLICY, q_model=actor_model)
 from random_maze_environment import random_maze
 env = random_maze(3,1)
-mdp.evaluate_model(env, 200, 30)
+mdp.evaluate_model(env, NUM_EPISODES, NUM_STEPS)
 #MDP.evaluate_maze_model(model=actor_model, policy_type=POLICY, method='policy-network', complex_input=0,state_formatter=vanilla_state_formatter )
