@@ -58,7 +58,7 @@ def to_vanilla_state_formatter(state):
 
 
 # Preprocessing
-data = pd.read_csv('log_data_episode_20000.csv')
+data = pd.read_csv('log_data_episode_5000.csv')
 #dic = {100: 1, -10: -0.2, -1: -0.1 }
 #data['Reward'] = data['Reward'].apply(lambda x: dic[x])
 #del(tmp)
@@ -228,7 +228,7 @@ update, action_gradient_holder = get_actor_update_operation(actor_model)
 sess.run(tf.global_variables_initializer())
 critic_model = critic_action_model()
 gradient_op = get_gradient_operation(critic_model)
-train_actor_critic_model(sess, actor_model, critic_model, data, 0.75, update, [action_gradient_holder, gradient_op], 10000, 5, True)
+train_actor_critic_model(sess, actor_model, critic_model, data, 0.75, update, [action_gradient_holder, gradient_op], 200, 5, True)
 
 
 
@@ -236,5 +236,5 @@ from MarkovDecisionProcess import MDP
 mdp = MDP(9,3,state_formatter=to_vanilla_state_formatter, method='policy-network', policy=POLICY, q_model=actor_model)
 from random_maze_environment import random_maze
 env = random_maze(3,1)
-mdp.evaluate_model(env, 200, 100)
+mdp.evaluate_model(env, 200, 30)
 #MDP.evaluate_maze_model(model=actor_model, policy_type=POLICY, method='policy-network', complex_input=0,state_formatter=vanilla_state_formatter )
