@@ -936,7 +936,7 @@ def random_agent(display=1):
             current_time = time()
             print('Iteration {} ({:.3f} (sec))'.format(iteration, current_time-prev_time))
             prev_time = current_time
-        if iteration % 5000 == 0:
+        if iteration % 4000 == 0:
             log.to_csv('log_data_episode_{}.csv'.format(iteration), index=False)
         buffer = DataFrame(columns=['Previous State', 'Action Taken', 'Reward', 'Current State', 'Move', 'Episode'], dtype=object)
 
