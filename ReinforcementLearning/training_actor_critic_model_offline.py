@@ -12,6 +12,7 @@ DEBUG = 1
 POLICY = 'softmax'
 BATCH_SIZE = 5
 LR = .5e-3
+DISPLAY=0
 def clean_state(state):
     tmp = state.split()[1::]
     tmp[-1] = state[-3] +'.'
@@ -231,7 +232,9 @@ gradient_op = get_gradient_operation(critic_model)
 train_actor_critic_model(sess, actor_model, critic_model, data, 0.75, update, [action_gradient_holder, gradient_op], 200, 5, True)
 
 
-
+import matplotlib
+if not DISPLAY:
+    matplotlib.use('Agg')
 from MarkovDecisionProcess import MDP
 mdp = MDP(9,3,state_formatter=to_vanilla_state_formatter, method='policy-network', policy=POLICY, q_model=actor_model)
 from random_maze_environment import random_maze
