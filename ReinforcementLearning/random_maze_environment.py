@@ -134,7 +134,8 @@ class random_maze:
         while not connected:
             maze = Map.random_grid_map(num_colours, length)
             maze.show(delay=delay,ax=ax, show=display)
-            ax.cla()
+            if ax is None:
+                ax.cla()
             connected = maze.has_path(start, end)
         self.maze = maze
         return maze
