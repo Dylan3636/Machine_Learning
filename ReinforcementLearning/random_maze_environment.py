@@ -13,6 +13,7 @@ class random_maze:
         self.actions = [MOVEMENTS, CARDINALS][action_type]
         self.num_actions = len(self.actions)
         self.randomize = auto_randomize
+        plt.ioff()
         self.ax = plt.subplot(111) if ax is None else ax
         self.maze = Map.random_grid_map(length=length, num_colours=num_colours)
         self.transition_model = self.maze.get_transition_model(noise=noise, noise_type=noise_type)
