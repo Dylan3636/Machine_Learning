@@ -5,29 +5,33 @@ Created on Tue Sep 26 23:34:07 2017
 @author: dylan
 """
 
-
+import random
+#setting seed
+random.seed(5)
 import pandas as pd
 import numpy as np
 #Initialize constants
-LENGTH_OF_MAZE = 9
+LENGTH_OF_MAZE = 3
 NUM_COLOURS = 1
 NUM_ACTIONS = 3
 ORIENTATION_DIM = 4
-STATE_DIM = LENGTH_OF_MAZE + ORIENTATION_DIM
+STATE_DIM = LENGTH_OF_MAZE**2 + ORIENTATION_DIM
 SENSOR_DIM = 8
 POLICY = 'softmax'
-POLICY_LEARNING_ALGO = 'SARSA'
+POLICY_LEARNING_ALGO = 'Q-learning'
 TARGET_MODEL = 1
-VANILLA=1
+VANILLA=0
 BATCH_SIZE = 5
-ITERATIONS = 10000
+ITERATIONS = 5000
 TAU = 1e-3
-LR = .5e-3
+LR = 1e-3
 NUM_STEPS = 50
-NUM_EPISODES = 100
+NUM_EPISODES = 200
+SEED=15,485,863
+RANDOM_STATE = np.random.RandomState(seed=SEED)
 DEBUG = 0
-DISPLAY=0
-
+DISPLAY = 0
+print(ITERATIONS)
 
 # Preprocessing functions
 def clean_state(state):
@@ -78,7 +82,7 @@ def to_vanilla_state_formatter(state):
 
 
 # Preprocessing
-data = pd.read_csv('log_data_episode_5000.csv')
+data = pd.read_csv('log_data_episode_10000.csv')
 #dic = {100: 1, -10: -0.2, -1: -0.1 }
 #data['Reward'] = data['Reward'].apply(lambda x: dic[x])
 data['Previous State'] = data['Previous State'].apply(clean_state).values
@@ -154,7 +158,6 @@ def get_actor_update_operation(actor_model):
     policy = actor_model.output
 
     action_gradients = tf.placeholder('float', shape = [None, NUM_ACTIONS])
-    #loss = tf.nn.log_softmax(policy)
 
     weights = actor_model.trainable_weights
     gradient_parameters = tf.gradients(policy, weights, -action_gradients)
@@ -197,17 +200,22 @@ def train_actor_critic_model(sess, models, episodes, gamma, tf_holders, iteratio
     K.set_session(sess)
     actor_model = models[0]
     critic_model = models[1]
+    np.random.seed(SEED)
     for iteration in range(iterations):
-        print('Iteration: {}'.format(iteration))
+        if DEBUG:
+            print('Iteration: {}'.format(iteration))
+        else:
+            print('\r','Iteration: {}'.format(iteration), end="")
         targets = []
         states = []
         readings = []
         actions = []
         deltas = []
         for _, frame in episodes.sample(batch_size).iterrows():
-            state, action,reward, next_state,_,_,_,_ = frame
+            state, action,reward, next_state, _, _, _, _ = frame
             state, reading, action = np.reshape(state[0:STATE_DIM], (1,STATE_DIM)), np.reshape(state[STATE_DIM::], (1,SENSOR_DIM)), np.reshape(action_encoder(action), (1,NUM_ACTIONS))
             next_state, next_reading = np.reshape(next_state[0:STATE_DIM],(1,STATE_DIM)), np.reshape(next_state[STATE_DIM::],(1,SENSOR_DIM))
+
             if TARGET_MODEL:
                 q = models[3].predict([state, reading, action], batch_size=1).flatten()
             else:
@@ -233,17 +241,17 @@ def train_actor_critic_model(sess, models, episodes, gamma, tf_holders, iteratio
                     # Epsilon-Greedy Policy
                     if POLICY == 'epsilon-greedy':
                         indx = np.argmax(next_policy)
-                        if np.random.rand() < 0.5:
-                            next_action = action_encoder(np.random.choice(NUM_ACTIONS))
+                        if RANDOM_STATE.rand() < 0.5:
+                            next_action = action_encoder(RANDOM_STATE.choice(NUM_ACTIONS))
                         else:
                             next_action = action_encoder(indx)
 
                     # Softmax policy
                     elif POLICY == 'softmax':
                         if not vanilla_actor:
-                            next_action = action_encoder(np.random.choice(NUM_ACTIONS, p=next_policy))
+                            next_action = action_encoder(RANDOM_STATE.choice(NUM_ACTIONS, p=next_policy))
                         else:
-                            next_action = action_encoder(np.random.choice(NUM_ACTIONS, p=next_policy))
+                            next_action = action_encoder(RANDOM_STATE.choice(NUM_ACTIONS, p=next_policy))
 
                 elif POLICY_LEARNING_ALGO == 'Q-learning':
                     indx = np.argmax(next_policy)
@@ -308,6 +316,6 @@ if not DISPLAY:
 from MarkovDecisionProcess import MDP
 mdp = MDP(LENGTH_OF_MAZE**2, NUM_ACTIONS, state_formatter=to_vanilla_state_formatter if VANILLA else state_formatter, method='policy-network', policy=POLICY, q_model=actor_model)
 from random_maze_environment import random_maze
-env = random_maze(LENGTH_OF_MAZE, NUM_COLOURS)
-mdp.evaluate_model_in_environment(env, NUM_EPISODES, NUM_STEPS, show_env=0)
+env = random_maze(LENGTH_OF_MAZE, NUM_COLOURS, randomize_maze=1, randomize_state=0, random_state=RANDOM_STATE)
+mdp.evaluate_model_in_environment(env, NUM_EPISODES, NUM_STEPS, show_env=DISPLAY)
 #MDP.evaluate_maze_model(model=actor_model, policy_type=POLICY, method='policy-network', complex_input=0,state_formatter=vanilla_state_formatter )

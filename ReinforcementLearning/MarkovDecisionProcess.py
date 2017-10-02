@@ -24,8 +24,6 @@ import imageio
 from matplotlib.gridspec import GridSpec
 
 
-#recurrent_layer=0,num_inputs=None, num_hidden_neurons=20, num_hidden_layers=1, lookback=1, num_rnn_units=64, num_output_neurons=4, convolutional_layer=0, filters=16, kernel_size=2, dropout_rate=0.2, l2=0.7
-
 class MDP:
     """Basic implementation of a finite Markov Decision Process    
     """
@@ -46,12 +44,12 @@ class MDP:
         epsilon:           float - epsilon used in epsilon-greedy policy
         epsilon-decay:     float - epsilon is discounted by this amount after each episode
         minimum_epsilon:   smallest value epsilon is allowed to take
-        transition_model:  f: int -> int [num_states, num_states] - function that returns float [num_states, num_states] (transition probability from each state to another state) when given action
+        transition_model:  f: int -> int [state_dim, state_dim] - function that returns float [state_dim, state_dim] (transition probability from each state to another state) when given action
         immediate_rewards: f: int x int -> float - function that returns float (reward) when given state index and action index
         value_funtion:     f: int -> float - function that returns value of state when given state index
         function_type:     int - Index indicating function type
         policy:            f: int -> float [num_actions, 1] - function that returns probabilities of choosing an action when given a state index
-        init_Q_matrix:     float[num_states, num_actions] - initial Q matrix
+        init_Q_matrix:     float[state_dim, num_actions] - initial Q matrix
         q-model:           keras neural-network -  approximates the Q matrix
         v-model:           keras neural-network -  approximates the V function
         network_type:      String - Type of neural-network (Case insensitive). Options ['Q', 'V']
@@ -188,7 +186,7 @@ class MDP:
             return np.random.choice(range(len(p)), p=p)
 
 
-    def update(self, state, action, reward, next_state, done=False, log=True, replay=False, batch_size=1,minibatch_size=1, dropout=0.2):  
+    def update(self, state, action, reward, next_state, done=False, log=False, replay=False, batch_size=1,minibatch_size=1, dropout=0.2):
         self.current_return += reward
         state = self.state_formatter(state)
         next_state = self.state_formatter(next_state)
@@ -231,7 +229,6 @@ class MDP:
                 self.model.fit(np.array(states)[0], np.array(targets)[0], batch_size=minibatch_size, epochs=1, verbose=0)
 
             else:
-
                 future_q = np.max(self.model.predict(next_state, batch_size=1).flatten())
                 q = self.model.predict(state, batch_size=1).flatten()
                 target = reward + self.gamma*future_q
@@ -240,32 +237,33 @@ class MDP:
                 self.model.fit(state, q, batch_size=1, epochs=1, verbose=0)
 
         elif self.method == 'policy-network':
-                if np.random.random_sample() < replay:
-                    targets = []
-                    states = []
+            pass
 
-                    for _, frame in self.log.sample(len(self.log) if len(self.log) < batch_size else batch_size).iterrows():
-                        state, action, next_state, reward, done = frame
-                        q = self.model.predict(state, batch_size=1).flatten()
-                        if done:
-                            target = reward
-                        else:
-                            future_q = np.max(self.model.predict(next_state, batch_size=1).flatten())
-                            target = reward + self.gamma * future_q
-                        q[action] = target
-                        q = np.reshape(q, (-1, len(q)))
-                        targets.append(q)
-                        states.append(state)
-                    self.model.fit(np.array(states)[0], np.array(targets)[0], batch_size=minibatch_size, epochs=1, verbose=0)
-
+    def policy_network_update(self, state, action, reward, next_state, replay=False, batch_size=1,minibatch_size=1):
+        if np.random.random_sample() < replay:
+            targets = []
+            states = []
+            for _, frame in self.log.sample(len(self.log) if len(self.log) < batch_size else batch_size).iterrows():
+                state, action, next_state, reward, done = frame
+                q = self.model.predict(state, batch_size=1).flatten()
+                if done:
+                    target = reward
                 else:
-
                     future_q = np.max(self.model.predict(next_state, batch_size=1).flatten())
-                    q = self.model.predict(state, batch_size=1).flatten()
-                    target = reward + self.gamma*future_q
-                    q[action] = target
-                    q = np.reshape(q, (-1, len(q)))
-                    self.model.fit(state, q, batch_size=1, epochs=1, verbose=0)
+                    target = reward + self.gamma * future_q
+                q[action] = target
+                q = np.reshape(q, (-1, len(q)))
+                targets.append(q)
+                states.append(state)
+            self.model.fit(np.array(states)[0], np.array(targets)[0], batch_size=minibatch_size, epochs=1, verbose=0)
+
+        else:
+            future_q = np.max(self.model.predict(next_state, batch_size=1).flatten())
+            q = self.model.predict(state, batch_size=1).flatten()
+            target = reward + self.gamma * future_q
+            q[action] = target
+            q = np.reshape(q, (-1, len(q)))
+            self.model.fit(state, q, batch_size=1, epochs=1, verbose=0)
 
     def draw_graph(self, returns, success=None, iteration=None, fig=None, gs=None, ax=None):
         if success is not None:
@@ -322,8 +320,6 @@ class MDP:
 
         episodes = range(num_episodes)
         timesteps = range(num_timesteps)
-        returns_list = deque(maxlen=100)
-        average_returns = []
 
         if type(show_env) is int:
             visualize = [[], list(episodes)][show_env]
@@ -340,6 +336,7 @@ class MDP:
         visualize_graph = lambda x: x in episode_list_graph
 
         current_return = 0
+        timesteps_list = []
         returns = []
         for episode in episodes:
             prev_observation = env.reset()
@@ -357,13 +354,14 @@ class MDP:
                 if visualize_graph(episode):
                     self.draw_graph(returns, ax=ax_graph)
                 if done:
-                    returns_list.append(current_return)
                     returns.append(current_return)
+                    timesteps_list.append(t)
                     if verbose == 1:
-                        print('Episode {} finished after {} timesteps. Total reward {}. Average return over past 100 episodes {}'.format(episode, t, current_return, np.mean(list(returns_list))))
+                        print('Episode {} finished after {} timesteps. Total reward {}. Average return over past 100 episodes {}'.format(episode, t, current_return, np.mean(returns[-(np.min([100, len(returns)-1]))::]) ))
                     current_return = 0
                     break
-        print('Average return: {.3f} +/- {.5f}'.format(np.mean(returns), np.std(returns)))
+
+        print('Average timesteps per episode: {:d} +- {:d}\nAverage return: {:.3f} +/- {:.5f}'.format(int(np.mean(timesteps_list)), int(np.std(timesteps_list)), float(np.mean(returns)), float(np.std(returns))))
 
     @staticmethod
     def evaluate_maze_model(model=None, method='q-network', policy_type='softmax', train=0, complex_input=0, state_formatter = lambda x:x):

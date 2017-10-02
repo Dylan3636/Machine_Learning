@@ -6,15 +6,11 @@ from sklearn.preprocessing import MinMaxScaler
 import time
 from collections import deque
 from keras.models import Sequential
-from keras.layers import Conv1D
 from keras.layers import Dense
-from keras.layers import Input
 from keras.layers import Dropout
 from keras.optimizers import Adam
 
-
 plt.ion()
-
 def draw_graph(returns, ax):
     ax.cla()
     returns = np.array(returns)
@@ -42,25 +38,26 @@ def build_model():
 
 env_name ='CartPole-v0'
 env = gym.make(env_name)
-num_episodes = 5000
+state_dim = env.observation_space.shape[0]
+action_dim = env.action_space.n
+actions = range(env.action_space.n)
 
+def state_formatter(observations):
+    return np.reshape(observations, (-1, state_dim))
+
+num_episodes = 5000
+episodes = range(num_episodes)
+timesteps = range(500)
 visualize = np.zeros(num_episodes)
 for i in range(0, num_episodes, 50):
     visualize[i] =1
 visualize_graphs = visualize
-episodes = range(num_episodes)
-timesteps = range(500)
-
-num_states = env.observation_space.shape[0]
-actions = range(env.action_space.n)
 
 print('Action space: {}'.format(env.action_space))
 print('Observation space: {}'.format(env.observation_space))
 
-neurons = np.array([2**n for n in range(10)])
-base_neuron = neurons[np.argmax((neurons-num_states)>=0)]
 base_neuron = 256
-mdp = MDP(num_actions=env.action_space.n, recurrent_layer=0, num_inputs=num_states, num_hidden_neurons=[base_neuron, 2 * base_neuron],
+mdp = MDP(num_actions=env.action_space.n, state_formatter=state_formatter,recurrent_layer=0, num_inputs=state_dim, num_hidden_neurons=[base_neuron, 2 * base_neuron],
           num_hidden_layers=1, num_output_neurons=env.action_space.n, epsilon=1.0, gamma=0.99, epsilon_decay=0.9954, dropout_rate=0.2)
 
 scaler = MinMaxScaler()
@@ -80,13 +77,12 @@ for episode in episodes:
         if done:
             print('Episode {} finished after {} timesteps.(Average timesteps: {})'.format(episode, t, np.mean(timesteps_list)))
             break
-        action = mdp.make_decision(np.reshape(previous_observation, (-1, num_states))) # pick action
+        action = mdp.make_decision(np.reshape(previous_observation, (-1, state_dim))) # pick action
         next_observation, reward, done, info = env.step(action) # take action and see results
-        if done and timesteps != 199:
+        if done and t!= 199:
             reward = -1000
-        #next_observation = scaler.transform(np.reshape(next_observation, (1, num_states)))
         if np.random.rand()>0.2 or done: #Dropout
-            mdp.update(np.reshape(previous_observation, (-1, num_states)), action, reward, np.reshape(next_observation, (-1, num_states)), done)
+            mdp.update(previous_observation, action, reward, next_observation, done)
 
         previous_observation = next_observation
     returns.append(mdp.current_return)

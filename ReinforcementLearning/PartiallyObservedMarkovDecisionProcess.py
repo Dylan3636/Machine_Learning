@@ -219,9 +219,9 @@ def qnn_test():
             # if iteration%100 ==0:
             #     connected=False
             #     while not connected:
-            #         map = Map.random_grid_map(num_colours, int(np.sqrt(num_states)))
+            #         map = Map.random_grid_map(num_colours, int(np.sqrt(state_dim)))
             #         map.show(delay=0.5, show=0)
-            #         connected = map.has_path(0, num_states - 1)
+            #         connected = map.has_path(0, state_dim - 1)
             #     model = map.get_transition_model(noise=0)
             #     transition_model = get_transition_model(map, model)
             #     sensor_model = map.get_sensor_model(noise=0.2)
@@ -259,9 +259,9 @@ def qnn_test():
             # if iteration % 100 == 0:
             #     connected=False
             #     while not connected:
-            #         map = Map.random_grid_map(num_colours, int(np.sqrt(num_states)))
+            #         map = Map.random_grid_map(num_colours, int(np.sqrt(state_dim)))
             #         map.show(delay=0.5, show=0)
-            #         connected = map.has_path(0, num_states - 1)
+            #         connected = map.has_path(0, state_dim - 1)
             #     model = map.get_transition_model(noise=0)
             #     transition_model = get_transition_model(map, model)
             #     sensor_model = map.get_sensor_model(noise=0.2)
@@ -368,9 +368,9 @@ def vnn_test():
             # if iteration%100 ==0:
             #     connected=False
             #     while not connected:
-            #         map = Map.random_grid_map(num_colours, int(np.sqrt(num_states)))
+            #         map = Map.random_grid_map(num_colours, int(np.sqrt(state_dim)))
             #         map.show(delay=0.5, show=0)
-            #         connected = map.has_path(0, num_states - 1)
+            #         connected = map.has_path(0, state_dim - 1)
             #     model = map.get_transition_model(noise=0)
             #     transition_model = get_transition_model(map, model)
             #     sensor_model = map.get_sensor_model(noise=0.2)
@@ -408,9 +408,9 @@ def vnn_test():
             # if iteration % 100 == 0:
             #     connected=False
             #     while not connected:
-            #         map = Map.random_grid_map(num_colours, int(np.sqrt(num_states)))
+            #         map = Map.random_grid_map(num_colours, int(np.sqrt(state_dim)))
             #         map.show(delay=0.5, show=0)
-            #         connected = map.has_path(0, num_states - 1)
+            #         connected = map.has_path(0, state_dim - 1)
             #     model = map.get_transition_model(noise=0)
             #     transition_model = get_transition_model(map, model)
             #     sensor_model = map.get_sensor_model(noise=0.2)
@@ -525,9 +525,9 @@ def QRN_test():
             # if iteration%100 ==0:
             #     connected=False
             #     while not connected:
-            #         map = Map.random_grid_map(num_colours, int(np.sqrt(num_states)))
+            #         map = Map.random_grid_map(num_colours, int(np.sqrt(state_dim)))
             #         map.show(delay=0.5, show=0)
-            #         connected = map.has_path(0, num_states - 1)
+            #         connected = map.has_path(0, state_dim - 1)
             #     model = map.get_transition_model(noise=0)
             #     transition_model = get_transition_model(map, model)
             #     sensor_model = map.get_sensor_model(noise=0.2)
@@ -567,9 +567,9 @@ def QRN_test():
             # if iteration % 100 == 0:
             #     connected=False
             #     while not connected:
-            #         map = Map.random_grid_map(num_colours, int(np.sqrt(num_states)))
+            #         map = Map.random_grid_map(num_colours, int(np.sqrt(state_dim)))
             #         map.show(delay=0.5, show=0)
-            #         connected = map.has_path(0, num_states - 1)
+            #         connected = map.has_path(0, state_dim - 1)
             #     model = map.get_transition_model(noise=0)
             #     transition_model = get_transition_model(map, model)
             #     sensor_model = map.get_sensor_model(noise=0.2)
