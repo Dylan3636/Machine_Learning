@@ -8,16 +8,24 @@ Created on Tue Sep 26 23:34:07 2017
 
 import pandas as pd
 import numpy as np
-DEBUG = 1
+#Initialize constants
+LENGTH_OF_MAZE = 9
+NUM_COLOURS = 1
+NUM_ACTIONS = 3
+ORIENTATION_DIM = 4
+STATE_DIM = LENGTH_OF_MAZE + ORIENTATION_DIM
+SENSOR_DIM = 8
 POLICY = 'softmax'
 POLICY_LEARNING_ALGO = 'SARSA'
 TARGET_MODEL = 1
+VANILLA=1
 BATCH_SIZE = 5
-ITERATIONS = 30000
+ITERATIONS = 10000
 TAU = 1e-3
 LR = .5e-3
 NUM_STEPS = 50
-NUM_EPISODES = 200
+NUM_EPISODES = 100
+DEBUG = 0
 DISPLAY=0
 
 
@@ -27,13 +35,13 @@ def clean_state(state):
     tmp[-1] = state[-3] +'.'
     tmp= np.array(tmp, dtype=float)
     reading = tmp[-3::]
-    one_hot = np.zeros(8)
+    one_hot = np.zeros(SENSOR_DIM)
     index = int(reading[0] + 2*reading[1] + 4*reading[2])
     one_hot[index] = 1
     return np.array(list(tmp[0:-3]) + list(one_hot), dtype=int)
     
 def reading_encoder(reading):
-    one_hot = np.zeros(8)
+    one_hot = np.zeros(SENSOR_DIM)
     index = int(reading[0] + 2*reading[1] + 4*reading[2])
     one_hot[index] = 1
     return one_hot
@@ -50,14 +58,14 @@ def sum_rewards(episodes):
 
 
 def action_encoder(action_index):
-    encoded_action = np.zeros(3)
+    encoded_action = np.zeros(NUM_ACTIONS)
     encoded_action[action_index]=1
     return encoded_action
 
 
 def state_formatter(full_state):
-    state = np.reshape(full_state[0:13], [-1, 13])
-    readings = np.reshape(full_state[13::], [-1, 8])
+    state = np.reshape(np.append(full_state[0], full_state[1]), [-1, STATE_DIM])
+    readings = np.reshape(reading_encoder(full_state[2]), [-1, SENSOR_DIM])
     return [state, readings]
 
 
@@ -73,7 +81,6 @@ def to_vanilla_state_formatter(state):
 data = pd.read_csv('log_data_episode_5000.csv')
 #dic = {100: 1, -10: -0.2, -1: -0.1 }
 #data['Reward'] = data['Reward'].apply(lambda x: dic[x])
-#del(tmp)
 data['Previous State'] = data['Previous State'].apply(clean_state).values
 data['Current State'] = data['Current State'].apply(clean_state).values
 
@@ -88,23 +95,23 @@ from keras.optimizers import Adam
 import tensorflow as tf
 from keras import backend as K
 
-# Building Neural Network functions
-def actor_model():
-    state = Input(shape=[13])
-    readings = Input(shape=[8])
+# Neural Network functions
+def get_actor_model():
+    state = Input(shape=[STATE_DIM])
+    readings = Input(shape=[SENSOR_DIM])
     h1 = (Dense(units=64, activation='relu', input_dim=21, use_bias=False))(state)
     full_state = concatenate([h1, readings])
     h2 = Dense(units=128, activation='relu', input_dim=21)(full_state)
-    out = Dense(units=3, activation='softmax')(h2)
+    out = Dense(units=NUM_ACTIONS, activation='softmax')(h2)
     model = Model(inputs=[state, readings], outputs=out)
     model.compile(loss='mse', optimizer=Adam(lr=1e-3))
     return model
 
 
-def critic_action_model():
-    state = Input(shape=[13])
-    reading = Input(shape=[8])
-    action = Input(shape=[3])
+def get_critic_action_model():
+    state = Input(shape=[STATE_DIM])
+    reading = Input(shape=[SENSOR_DIM])
+    action = Input(shape=[NUM_ACTIONS])
 
     h1 = (Dense(units=64, activation='relu', use_bias=False))(state)
     full_state = concatenate([h1, reading])
@@ -120,24 +127,24 @@ def critic_action_model():
     return model
 
 
-def actor_model_vanilla():
+def get_vanilla_actor_model():
     model = Sequential()
     model.add(Dense(units=64, activation='relu', input_shape=[21], use_bias=False))
     model.add(Dropout(0.9))
     model.add(Dense(units=128, activation='relu'))
     model.add(Dropout(0.9))
-    model.add(Dense(units=3, activation='softmax'))
+    model.add(Dense(units=NUM_ACTIONS, activation='softmax'))
     model.compile(loss='mse', optimizer=Adam(lr=0.0001))
     return model
 
 
-def critic_model():
-    state = Input(shape=[13])
-    readings = Input(shape=[8])
+def get_critic_model():
+    state = Input(shape=[STATE_DIM])
+    readings = Input(shape=[SENSOR_DIM])
     h1 = (Dense(units=64, activation='relu', input_dim=21, use_bias=False))(state)
     full_state = concatenate([h1, readings])
     h2 = Dense(units=128, activation='relu', input_dim=21)(full_state)
-    out = Dense(units=3, activation='linear')(h2)
+    out = Dense(units=NUM_ACTIONS, activation='linear')(h2)
     model = Model(inputs=[state, readings], outputs=out)
     model.compile(loss='mse', optimizer=Adam(lr=0.001))
     return model
@@ -146,7 +153,7 @@ def critic_model():
 def get_actor_update_operation(actor_model):
     policy = actor_model.output
 
-    action_gradients = tf.placeholder('float', shape = [None, 3])
+    action_gradients = tf.placeholder('float', shape = [None, NUM_ACTIONS])
     #loss = tf.nn.log_softmax(policy)
 
     weights = actor_model.trainable_weights
@@ -199,8 +206,8 @@ def train_actor_critic_model(sess, models, episodes, gamma, tf_holders, iteratio
         deltas = []
         for _, frame in episodes.sample(batch_size).iterrows():
             state, action,reward, next_state,_,_,_,_ = frame
-            state, reading, action = np.reshape(state[0:13], (1,13)), np.reshape(state[13::], (1,8)), np.reshape(action_encoder(action), (1,3))
-            next_state, next_reading = np.reshape(next_state[0:13],(1,13)), np.reshape(next_state[13::],(1,8))
+            state, reading, action = np.reshape(state[0:STATE_DIM], (1,STATE_DIM)), np.reshape(state[STATE_DIM::], (1,SENSOR_DIM)), np.reshape(action_encoder(action), (1,NUM_ACTIONS))
+            next_state, next_reading = np.reshape(next_state[0:STATE_DIM],(1,STATE_DIM)), np.reshape(next_state[STATE_DIM::],(1,SENSOR_DIM))
             if TARGET_MODEL:
                 q = models[3].predict([state, reading, action], batch_size=1).flatten()
             else:
@@ -227,22 +234,22 @@ def train_actor_critic_model(sess, models, episodes, gamma, tf_holders, iteratio
                     if POLICY == 'epsilon-greedy':
                         indx = np.argmax(next_policy)
                         if np.random.rand() < 0.5:
-                            next_action = action_encoder(np.random.choice(3))
+                            next_action = action_encoder(np.random.choice(NUM_ACTIONS))
                         else:
                             next_action = action_encoder(indx)
 
                     # Softmax policy
                     elif POLICY == 'softmax':
                         if not vanilla_actor:
-                            next_action = action_encoder(np.random.choice(3, p=next_policy))
+                            next_action = action_encoder(np.random.choice(NUM_ACTIONS, p=next_policy))
                         else:
-                            next_action = action_encoder(np.random.choice(3, p=next_policy))
+                            next_action = action_encoder(np.random.choice(NUM_ACTIONS, p=next_policy))
 
                 elif POLICY_LEARNING_ALGO == 'Q-learning':
                     indx = np.argmax(next_policy)
                     next_action = action_encoder(indx)
 
-                next_action = np.reshape(next_action, (1, 3))
+                next_action = np.reshape(next_action, (1, NUM_ACTIONS))
                 if TARGET_MODEL:
                     future_q = models[3].predict([next_state, next_reading, next_action], batch_size=1).flatten()
                 else:
@@ -258,7 +265,7 @@ def train_actor_critic_model(sess, models, episodes, gamma, tf_holders, iteratio
         critic_model.train_on_batch([np.array(states).squeeze(axis=1), np.array(readings).squeeze(axis=1), np.array(actions).squeeze(axis=1)], np.array(targets))
         gradients = get_critic_gradients(sess, tf_holders[2], critic_model, np.array(states).squeeze(axis=1), np.array(readings).squeeze(axis=1), np.array(actions).squeeze(axis=1))
         gradients = np.squeeze(gradients)
-        gradients = np.reshape(gradients,(-1, 3))
+        gradients = np.reshape(gradients,(-1, NUM_ACTIONS))
 
         if vanilla_actor:
             full_states=[np.append(state_reading[0], state_reading[1], axis=1) for state_reading in zip(states, readings)]
@@ -280,11 +287,11 @@ def train_actor_critic_model(sess, models, episodes, gamma, tf_holders, iteratio
 sess = tf.Session()
 K.set_learning_phase(1)  # set learning phase
 
-actor_model = actor_model_vanilla()
-critic_model = critic_action_model()
+actor_model = get_vanilla_actor_model() if VANILLA else get_actor_model()
+critic_model = get_critic_action_model()
 if TARGET_MODEL:
-    target_actor_model = actor_model_vanilla()
-    target_critic_model = critic_action_model()
+    target_actor_model = get_vanilla_actor_model() if VANILLA else get_actor_model()
+    target_critic_model = get_critic_action_model()
 else:
     target_actor_model=None
     target_critic_model=None
@@ -292,15 +299,15 @@ else:
 update_op, action_gradient_holder = get_actor_update_operation(actor_model)
 gradient_op = get_gradient_operation(critic_model)
 sess.run(tf.global_variables_initializer())
-train_actor_critic_model(sess, [actor_model, critic_model, target_actor_model, target_critic_model], data, 0.75, [action_gradient_holder,update_op , gradient_op], ITERATIONS, BATCH_SIZE, True)
+train_actor_critic_model(sess, [actor_model, critic_model, target_actor_model, target_critic_model], data, 0.75, [action_gradient_holder,update_op , gradient_op], ITERATIONS, BATCH_SIZE, VANILLA)
 
 
 import matplotlib
 if not DISPLAY:
     matplotlib.use('Agg')
 from MarkovDecisionProcess import MDP
-mdp = MDP(9,3,state_formatter=to_vanilla_state_formatter, method='policy-network', policy=POLICY, q_model=actor_model)
+mdp = MDP(LENGTH_OF_MAZE**2, NUM_ACTIONS, state_formatter=to_vanilla_state_formatter if VANILLA else state_formatter, method='policy-network', policy=POLICY, q_model=actor_model)
 from random_maze_environment import random_maze
-env = random_maze(3,1)
-mdp.evaluate_model_in_environment(env, NUM_EPISODES, NUM_STEPS, show_env=1)
+env = random_maze(LENGTH_OF_MAZE, NUM_COLOURS)
+mdp.evaluate_model_in_environment(env, NUM_EPISODES, NUM_STEPS, show_env=0)
 #MDP.evaluate_maze_model(model=actor_model, policy_type=POLICY, method='policy-network', complex_input=0,state_formatter=vanilla_state_formatter )
