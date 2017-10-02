@@ -897,7 +897,7 @@ def Q_test_2():
 
     mdp.log.to_csv('qrn_model.csv')
 
-def random_agent():
+def random_agent(display=1):
     num_colours = 2
     num_states = 9
     state_dim = num_states + 4
@@ -909,12 +909,14 @@ def random_agent():
 
     randomize = 1
     model_num = 1
-
     figsize = (18.5, 8)
     gs = GridSpec(2, 2)
 
     fig = plt.figure(1, figsize=figsize)
-    ax = fig.add_subplot(gs[:, 1])
+    if display:
+        ax = fig.add_subplot(gs[:, 1])
+    else:
+        ax = None
     map = generate_random_map(num_states, num_colours, 0, num_states-1, ax, delay=1 )
     transition_model = map.get_transition_model(noise=0)
     prev_state = np.zeros(state_dim)
@@ -934,7 +936,7 @@ def random_agent():
             current_time = time()
             print('Iteration {} ({:.3f} (sec))'.format(iteration, current_time-prev_time))
             prev_time = current_time
-        if iteration % 5000 == 0:
+        if iteration % 4000 == 0:
             log.to_csv('log_data_episode_{}.csv'.format(iteration), index=False)
         buffer = DataFrame(columns=['Previous State', 'Action Taken', 'Reward', 'Current State', 'Move', 'Episode'], dtype=object)
 
@@ -1077,8 +1079,9 @@ def generate_random_map(num_states, num_colours, start, end, ax, delay=1.0):
     connected = False
     while not connected:
         map = Map.random_grid_map(num_colours, int(np.sqrt(num_states)))
-        map.show(delay=delay,ax=ax, show=0)
-        ax.cla()
+        map.show(delay=delay, ax=ax, show=0)
+        if ax is not None:
+            ax.cla()
         connected = map.has_path(start, end)
     return map
 
