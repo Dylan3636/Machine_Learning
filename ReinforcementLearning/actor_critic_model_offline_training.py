@@ -22,11 +22,11 @@ POLICY_LEARNING_ALGO = 'Q-learning'
 TARGET_MODEL = 1
 VANILLA=0
 BATCH_SIZE = 5
-ITERATIONS = 5000
+ITERATIONS = 500
 TAU = 1e-3
 LR = 1e-3
 NUM_STEPS = 50
-NUM_EPISODES = 200
+NUM_EPISODES = 20
 SEED=15,485,863
 RANDOM_STATE = np.random.RandomState(seed=SEED)
 DEBUG = 0
@@ -82,7 +82,7 @@ def to_vanilla_state_formatter(state):
 
 
 # Preprocessing
-data = pd.read_csv('log_data_episode_10000.csv')
+data = pd.read_csv('log_data_episode_5000.csv')
 #dic = {100: 1, -10: -0.2, -1: -0.1 }
 #data['Reward'] = data['Reward'].apply(lambda x: dic[x])
 data['Previous State'] = data['Previous State'].apply(clean_state).values
@@ -211,7 +211,7 @@ def train_actor_critic_model(sess, models, episodes, gamma, tf_holders, iteratio
         readings = []
         actions = []
         deltas = []
-        for _, frame in episodes.sample(batch_size).iterrows():
+        for _, frame in episodes.sample(batch_size, random_state = RANDOM_STATE).iterrows():
             state, action,reward, next_state, _, _, _, _ = frame
             state, reading, action = np.reshape(state[0:STATE_DIM], (1,STATE_DIM)), np.reshape(state[STATE_DIM::], (1,SENSOR_DIM)), np.reshape(action_encoder(action), (1,NUM_ACTIONS))
             next_state, next_reading = np.reshape(next_state[0:STATE_DIM],(1,STATE_DIM)), np.reshape(next_state[STATE_DIM::],(1,SENSOR_DIM))
