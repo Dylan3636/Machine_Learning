@@ -1,3 +1,4 @@
+from advanced_networks import network_toolkit
 import numpy as np
 import os
 import sys
@@ -29,7 +30,7 @@ class MDP:
     """
 
     def __init__(self, num_states=None, num_actions=None, gamma=0.9,lr=1e-3, method ='q-network', policy_type='epsilon-greedy', epsilon = 1e-2, epsilon_decay=0.995, minimum_epsilon=1e-2,
-                 transition_model=None, immediate_rewards=None, value_function=None, function_type=0, policy=None, init_Q_matrix=None, q_model=None, v_model=None, network_type='Q', folder_name='Default',log=None, state_formatter=None, **kwargs ):
+                 transition_model=None, immediate_rewards=None, value_function=None, function_type=0, policy=None, init_Q_matrix=None, q_model=None, v_model=None, actor_model=None, critic_model=None, target_models=[], network_type='Q', folder_name='Default',log=None, state_formatter=None, random_state=None,sess=None,**kwargs ):
         """
         Initializer for MDP agent
 
@@ -72,6 +73,9 @@ class MDP:
         self.gamma = gamma
         self.lr = lr
         self.epsilon_decay = epsilon_decay
+        self.actor_model=actor_model
+        self.critic_model = critic_model
+        self.target_models = target_models
         if q_model is None and v_model is None:
                 self.model = self._build_NN(**kwargs) #Q-Neural Network
         elif q_model is not None:
@@ -79,7 +83,7 @@ class MDP:
         else:
             self.model = v_model
         self.network_type = network_type.capitalize()
-        self .method = method.lower()
+        self.method = method.lower()
         self.current_return = 0
         self.buffer = DataFrame(columns=['Previous State', 'Action Taken', 'Current State', 'Reward', 'Completed'])
         if log is None:
@@ -89,6 +93,8 @@ class MDP:
         self.foldername = folder_name
         f=lambda x:x
         self.state_formatter = f if state_formatter is None else state_formatter
+        self.random_state = np.random if random_state is None else random_state
+        self.toolkit = network_toolkit(sess=sess, action_dimension=num_actions, use_target_models=target_models!=[])
 
     def train_offline(self, transition_model=None, immediate_returns=None, method='vi', gamma=0.9, theta=1e-10, alpha=0.8, terminal_states=[], in_place=True, initial_policy=None):
         method = method.strip().lower()
@@ -161,18 +167,20 @@ class MDP:
     def make_decision(self, state):
         state = self.state_formatter(state)
         if self.policy_type =='random':
-            return np.random.choice(range(self.num_actions))
+            return self.random_state.choice(range(self.num_actions))
         elif self.policy_type == 'epsilon-greedy':
-            if np.random.rand() <= self.epsilon:
-                return np.random.choice(range(self.num_actions))
-            if self.method in ['q-network','policy-network']:
+            if self.random_state.rand() <= self.epsilon:
+                return self.random_state.choice(range(self.num_actions))
+            if self.method in ['q-network', 'policy-network']:
                 q_values = np.array(self.model.predict(state)).flatten()
-            else:
+            elif self.method == 'q-table':
                 q_values = self.Q_matrix[self.get_state_index(state)]
+            elif self.method == 'actor-critic':
+                q_values = np.array(self.actor_model.predict(state)).flatten()
             return np.argmax(q_values)
 
         elif self.policy_type == 'softmax':
-            if self.method == 'policy-network':          
+            if self.method in ['policy-network', 'actor-critc']:
                 p = np.array(self.model.predict(state)).flatten()
 
             elif self.method == 'q-network':        
@@ -182,24 +190,28 @@ class MDP:
             elif self.method == 'q-table':
                 tmp = np.exp(self.Q_matrix[self.get_state_index(state)])
                 p = tmp/np.sum(tmp)
-                
-            return np.random.choice(range(len(p)), p=p)
+            elif self.method == 'actor-critic':
+                p = np.array(self.actor_model.predict(state)).flatten()
+
+            return self.random_state.choice(range(len(p)), p=p)
 
 
-    def update(self, state, action, reward, next_state, done=False, log=False, replay=False, batch_size=1,minibatch_size=1, dropout=0.2):
+    def update(self, state, action, reward, next_state, done=False, log=True, replay=True, batch_size=1, minibatch_size=1, dropout=0.2):
+        raw_state = state
+        raw_next_state = next_state
         self.current_return += reward
-        state = self.state_formatter(state)
-        next_state = self.state_formatter(next_state)
+        state = self.state_formatter(raw_state)
+        next_state = self.state_formatter(raw_next_state)
         if log:
-            self.buffer.loc[len(self.buffer), :] = [state, action, next_state, reward, done]
+            self.buffer.loc[len(self.buffer), :] = [raw_state, action, raw_next_state, reward, done]
             if done:
                 self.buffer['Total Return'] = self.buffer['Reward'].sum()
                 self.log = concat([self.log, self.buffer], axis=0)
                 self.buffer = DataFrame(columns=['Previous State', 'Action Taken', 'Current State', 'Reward', 'Completed'])
         if done:
-            self.epsilon = np.max(self.epsilon**self.epsilon_decay, self.minimum_epsilon)
+            self.epsilon = np.max([self.epsilon*self.epsilon_decay, self.minimum_epsilon])
 
-        if np.random.random_sample() < dropout:
+        if self.random_state.random_sample() < dropout:
             return
 
         if self.method == 'q_table':
@@ -207,7 +219,7 @@ class MDP:
 
         elif self.method == 'q-network':
             
-            if np.random.random_sample() < replay:
+            if self.random_state.random_sample() < replay:
                 targets = []
                 states = []
 
@@ -236,11 +248,19 @@ class MDP:
                 q = np.reshape(q, (-1, len(q)))
                 self.model.fit(state, q, batch_size=1, epochs=1, verbose=0)
 
+        elif self.method == 'actor-critic':
+            if self.random_state.rand() < replay:
+                episodes = self.log
+            else:
+                episodes = self.buffer.iloc[0, [0,1,2,3]]
+            if done:
+                self.toolkit.batch_train_actor_critic_model(models=self.target_models + [self.actor_model, self.critic_model], episodes=episodes, iterations=1, batch_size=batch_size )
+
         elif self.method == 'policy-network':
             pass
 
-    def policy_network_update(self, state, action, reward, next_state, replay=False, batch_size=1,minibatch_size=1):
-        if np.random.random_sample() < replay:
+    def policy_network_update(self, state, action, reward, next_state, replay=False, batch_size=1, minibatch_size=1):
+        if self.random_state.random_sample() < replay:
             targets = []
             states = []
             for _, frame in self.log.sample(len(self.log) if len(self.log) < batch_size else batch_size).iterrows():
@@ -303,10 +323,9 @@ class MDP:
             plt.pause(0.1)
             plt.show()
 
-    def evaluate_model_in_environment(self, env, num_episodes, num_timesteps, show_env=0, show_graph=0, ax_env=None, ax_graph=None,
+    def evaluate_model_in_environment(self, env, num_episodes, num_timesteps, show_env=0, train=0, show_graph=0, ax_env=None, ax_graph=None,
                                       verbose=1):
         """
-        :param mdp: MDP agent who's model is being evaluated
         :param env: Environment the model is being evaluated on
         :param num_episodes: (int) Number of episodes to run for
         :param num_timesteps: (int) Nunmber of steps in each episode
@@ -346,6 +365,8 @@ class MDP:
             for t in timesteps:
                 action = self.make_decision(prev_observation)
                 observation, reward, done, _ = env.step(action)
+                if train:
+                    self.update(state=prev_observation, action=action, reward=reward, next_state=observation, done=done)
                 current_return += reward
                 prev_observation = observation.copy()
 
@@ -360,8 +381,10 @@ class MDP:
                         print('Episode {} finished after {} timesteps. Total reward {}. Average return over past 100 episodes {}'.format(episode, t, current_return, np.mean(returns[-(np.min([100, len(returns)-1]))::]) ))
                     current_return = 0
                     break
+        stats = [int(np.mean(timesteps_list)), int(np.std(timesteps_list)), float(np.mean(returns)), float(np.std(returns))]
+        print('Average timesteps per episode: {:d} +- {:d}\nAverage return: {:.3f} +/- {:.5f}'.format(stats[0], stats[1], stats[2], stats[3]))
+        return stats
 
-        print('Average timesteps per episode: {:d} +- {:d}\nAverage return: {:.3f} +/- {:.5f}'.format(int(np.mean(timesteps_list)), int(np.std(timesteps_list)), float(np.mean(returns)), float(np.std(returns))))
 
     @staticmethod
     def evaluate_maze_model(model=None, method='q-network', policy_type='softmax', train=0, complex_input=0, state_formatter = lambda x:x):

@@ -142,7 +142,7 @@ class random_maze:
         ax = self.ax if ax is None else ax
         connected = False
         while not connected:
-            maze = Map.random_grid_map(num_colours, length)
+            maze = Map.random_grid_map(num_colours, length, random_state=self.rs)
             maze.init_G()
             if ax is not None:
                 ax.cla()
