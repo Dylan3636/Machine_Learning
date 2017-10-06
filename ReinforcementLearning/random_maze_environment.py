@@ -75,25 +75,16 @@ class random_maze:
                 reward = -0.1
                 done = 0
                 success=2
-            count = self.counter
+            self.current_return += reward
+            self.prev_action = action
+            self.prev_position = current_position.copy()
+            self.prev_orientation = current_orientation.copy()
+            if self.debug:
+                print([prev_position, current_readings, current_position, action])
             if done:
-                self.current_return += reward
-                #self.prev_action = 'Start'
-                # if self.rs.rand()<self.randomize:
-                #     position, _ = self.randomize_state()
-                #     self.randomize_maze(start=np.argmax(position),end= self.end_position )
                 self.graph_data[0].append(self.current_return)
-                self.current_return = 0
                 self.graph_data[1].append(success)
-                self.counter = 0
-            else:
-                self.prev_action=action
-                self.prev_position = current_position.copy()
-                self.prev_orientation = current_orientation.copy()
-                self.current_return += reward
-                if self.debug:
-                    print([prev_position, current_readings, current_position, action])
-            return [current_position, current_orientation, current_readings], reward, done, ['Not Successful', 'Succesful', count][success]
+            return [current_position, current_orientation, current_readings], reward, done, ['Not Successful', 'Succesful', self.counter][success]
 
     def reset_state(self):
         self.prev_position = np.zeros(self.maze.num_states)
@@ -103,6 +94,8 @@ class random_maze:
         return self.prev_position, self.prev_orientation
 
     def reset(self, randomize_state=None, randomize_maze=None):
+        self.counter = 0
+        self.current_return = 0
         randomize_state = self.random_state if randomize_state is None else randomize_state
         if self.rs.rand() < randomize_state:
             position, _ = self.randomize_state()
@@ -118,8 +111,8 @@ class random_maze:
         save_title = 'move_{}'.format(self.counter)
         self.maze.show(actual_state=np.argmax(self.prev_position), orientation=np.argmax(self.prev_orientation), delay=0.5,
                  title='Current Score: {}\n Last Action Taken: {}\n Move: {}'.format(
-                     self.current_return, self.prev_action,self.counter + '\n {}'.format(debug_info) if self.debug else ''
-                 ), show=1, save=self.save_data,
+                     self.current_return, self.prev_action, self.counter) + '\n {}'.format(debug_info) if self.debug else ''
+                 , show=1, save=self.save_data,
                  save_title=save_title, ax=self.ax)
 
     def randomize_state(self):

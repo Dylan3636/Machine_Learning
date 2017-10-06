@@ -33,8 +33,8 @@
       <file leaf-file-name="random_maze_environment.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/random_maze_environment.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1050">
-              <caret line="92" column="45" lean-forward="true" selection-start-line="92" selection-start-column="45" selection-end-line="92" selection-end-column="45" />
+            <state relative-caret-position="239">
+              <caret line="117" column="30" lean-forward="true" selection-start-line="117" selection-start-column="30" selection-end-line="117" selection-end-column="30" />
               <folding>
                 <element signature="e#0#25#0" expanded="true" />
               </folding>
@@ -52,11 +52,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="actor_critic_model_offline_training.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="actor_critic_model_offline_training.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/actor_critic_model_offline_training.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="302">
-              <caret line="196" column="50" lean-forward="false" selection-start-line="196" selection-start-column="50" selection-end-line="196" selection-end-column="50" />
+            <state relative-caret-position="172">
+              <caret line="364" column="109" lean-forward="false" selection-start-line="364" selection-start-column="109" selection-end-line="364" selection-end-column="109" />
               <folding />
             </state>
           </provider>
@@ -65,28 +65,33 @@
       <file leaf-file-name="advanced_networks.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/advanced_networks.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="152">
-              <caret line="52" column="25" lean-forward="true" selection-start-line="52" selection-start-column="0" selection-end-line="53" selection-end-column="0" />
+            <state relative-caret-position="231">
+              <caret line="56" column="0" lean-forward="false" selection-start-line="56" selection-start-column="0" selection-end-line="56" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="MarkovDecisionProcess.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="MarkovDecisionProcess.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/MarkovDecisionProcess.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2835">
-              <caret line="252" column="35" lean-forward="true" selection-start-line="252" selection-start-column="35" selection-end-line="252" selection-end-column="35" />
+            <state relative-caret-position="357">
+              <caret line="32" column="320" lean-forward="false" selection-start-line="32" selection-start-column="320" selection-end-line="32" selection-end-column="320" />
               <folding>
                 <element signature="e#0#45#0" expanded="true" />
-                <element signature="e#5163#6126#0" expanded="false" />
-                <element signature="e#6587#8534#0" expanded="false" />
-                <element signature="e#8587#9115#0" expanded="false" />
-                <element signature="e#9161#10613#0" expanded="false" />
-                <element signature="e#11763#13196#0" expanded="false" />
-                <element signature="e#13800#15021#0" expanded="false" />
-                <element signature="e#15124#16610#0" expanded="false" />
-                <element signature="e#19707#27625#0" expanded="false" />
+                <element signature="e#1332#4975#0" expanded="false" />
+                <element signature="e#5165#6128#0" expanded="false" />
+                <element signature="e#6589#8536#0" expanded="false" />
+                <element signature="e#8589#9117#0" expanded="false" />
+                <element signature="e#10783#13694#0" expanded="false" />
+                <element signature="e#11785#13218#0" expanded="false" />
+                <element signature="e#13822#15043#0" expanded="false" />
+                <element signature="e#15146#16632#0" expanded="false" />
+                <element signature="e#19730#27648#0" expanded="false" />
+                <element signature="e#33072#34284#0" expanded="false" />
+                <element signature="e#34309#35589#0" expanded="false" />
+                <element signature="e#35611#41848#0" expanded="false" />
+                <element signature="e#41883#47895#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -127,11 +132,11 @@
       <list>
         <option value="$PROJECT_DIR$/random_maze_model_no_display.py" />
         <option value="$PROJECT_DIR$/../../KaSeDy/pybot/tools/Map.py" />
-        <option value="$PROJECT_DIR$/random_maze_environment.py" />
         <option value="$PROJECT_DIR$/policy_networks.py" />
-        <option value="$PROJECT_DIR$/MarkovDecisionProcess.py" />
         <option value="$PROJECT_DIR$/advanced_networks.py" />
         <option value="$PROJECT_DIR$/actor_critic_model_offline_training.py" />
+        <option value="$PROJECT_DIR$/random_maze_environment.py" />
+        <option value="$PROJECT_DIR$/MarkovDecisionProcess.py" />
       </list>
     </option>
   </component>
@@ -386,12 +391,11 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-9" y="-9" width="1938" height="1048" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Documentation" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="FLOATING" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" x="91" y="91" width="1738" height="848" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32941177" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32941177" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32941177" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -465,14 +469,19 @@
           <caret line="938" column="24" lean-forward="false" selection-start-line="938" selection-start-column="24" selection-end-line="938" selection-end-column="24" />
           <folding>
             <element signature="e#0#45#0" expanded="true" />
-            <element signature="e#5163#6126#0" expanded="false" />
-            <element signature="e#6587#8534#0" expanded="false" />
-            <element signature="e#8587#9115#0" expanded="false" />
-            <element signature="e#9161#10613#0" expanded="false" />
-            <element signature="e#11763#13196#0" expanded="false" />
-            <element signature="e#13800#15021#0" expanded="false" />
-            <element signature="e#15124#16610#0" expanded="false" />
-            <element signature="e#19707#27625#0" expanded="false" />
+            <element signature="e#1332#4975#0" expanded="false" />
+            <element signature="e#5165#6128#0" expanded="false" />
+            <element signature="e#6589#8536#0" expanded="false" />
+            <element signature="e#8589#9117#0" expanded="false" />
+            <element signature="e#10783#13694#0" expanded="false" />
+            <element signature="e#11785#13218#0" expanded="false" />
+            <element signature="e#13822#15043#0" expanded="false" />
+            <element signature="e#15146#16632#0" expanded="false" />
+            <element signature="e#19730#27648#0" expanded="false" />
+            <element signature="e#33072#34284#0" expanded="false" />
+            <element signature="e#34309#35589#0" expanded="false" />
+            <element signature="e#35611#41848#0" expanded="false" />
+            <element signature="e#41883#47895#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -511,13 +520,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/random_maze_environment.py">
+    <entry file="file://$PROJECT_DIR$/advanced_networks.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1050">
-          <caret line="92" column="45" lean-forward="true" selection-start-line="92" selection-start-column="45" selection-end-line="92" selection-end-column="45" />
-          <folding>
-            <element signature="e#0#25#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="231">
+          <caret line="56" column="0" lean-forward="false" selection-start-line="56" selection-start-column="0" selection-end-line="56" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
@@ -529,37 +536,44 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/MarkovDecisionProcess.py">
+    <entry file="file://$PROJECT_DIR$/actor_critic_model_offline_training.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2835">
-          <caret line="252" column="35" lean-forward="true" selection-start-line="252" selection-start-column="35" selection-end-line="252" selection-end-column="35" />
+        <state relative-caret-position="172">
+          <caret line="364" column="109" lean-forward="false" selection-start-line="364" selection-start-column="109" selection-end-line="364" selection-end-column="109" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/random_maze_environment.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="239">
+          <caret line="117" column="30" lean-forward="true" selection-start-line="117" selection-start-column="30" selection-end-line="117" selection-end-column="30" />
           <folding>
-            <element signature="e#0#45#0" expanded="true" />
-            <element signature="e#5163#6126#0" expanded="false" />
-            <element signature="e#6587#8534#0" expanded="false" />
-            <element signature="e#8587#9115#0" expanded="false" />
-            <element signature="e#9161#10613#0" expanded="false" />
-            <element signature="e#11763#13196#0" expanded="false" />
-            <element signature="e#13800#15021#0" expanded="false" />
-            <element signature="e#15124#16610#0" expanded="false" />
-            <element signature="e#19707#27625#0" expanded="false" />
+            <element signature="e#0#25#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/advanced_networks.py">
+    <entry file="file://$PROJECT_DIR$/MarkovDecisionProcess.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="152">
-          <caret line="52" column="25" lean-forward="true" selection-start-line="52" selection-start-column="0" selection-end-line="53" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/actor_critic_model_offline_training.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="302">
-          <caret line="196" column="50" lean-forward="false" selection-start-line="196" selection-start-column="50" selection-end-line="196" selection-end-column="50" />
-          <folding />
+        <state relative-caret-position="357">
+          <caret line="32" column="320" lean-forward="false" selection-start-line="32" selection-start-column="320" selection-end-line="32" selection-end-column="320" />
+          <folding>
+            <element signature="e#0#45#0" expanded="true" />
+            <element signature="e#1332#4975#0" expanded="false" />
+            <element signature="e#5165#6128#0" expanded="false" />
+            <element signature="e#6589#8536#0" expanded="false" />
+            <element signature="e#8589#9117#0" expanded="false" />
+            <element signature="e#10783#13694#0" expanded="false" />
+            <element signature="e#11785#13218#0" expanded="false" />
+            <element signature="e#13822#15043#0" expanded="false" />
+            <element signature="e#15146#16632#0" expanded="false" />
+            <element signature="e#19730#27648#0" expanded="false" />
+            <element signature="e#33072#34284#0" expanded="false" />
+            <element signature="e#34309#35589#0" expanded="false" />
+            <element signature="e#35611#41848#0" expanded="false" />
+            <element signature="e#41883#47895#0" expanded="false" />
+          </folding>
         </state>
       </provider>
     </entry>

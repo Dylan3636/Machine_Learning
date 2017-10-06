@@ -30,7 +30,7 @@ class MDP:
     """
 
     def __init__(self, num_states=None, num_actions=None, gamma=0.9,lr=1e-3, method ='q-network', policy_type='epsilon-greedy', epsilon = 1e-2, epsilon_decay=0.995, minimum_epsilon=1e-2,
-                 transition_model=None, immediate_rewards=None, value_function=None, function_type=0, policy=None, init_Q_matrix=None, q_model=None, v_model=None, actor_model=None, critic_model=None, target_models=[], network_type='Q', folder_name='Default',log=None, state_formatter=None, random_state=None,sess=None,**kwargs ):
+                 transition_model=None, immediate_rewards=None, value_function=None, function_type=0, policy=None, init_Q_matrix=None, q_model=None, v_model=None, actor_model=None, critic_model=None, target_models=[], network_type='Q', folder_name='Default', log=None, state_formatter=None, random_state=None,sess=None, **kwargs ):
         """
         Initializer for MDP agent
 
@@ -192,7 +192,7 @@ class MDP:
                 p = tmp/np.sum(tmp)
             elif self.method == 'actor-critic':
                 p = np.array(self.actor_model.predict(state)).flatten()
-
+            print(p)
             return self.random_state.choice(range(len(p)), p=p)
 
 
@@ -374,6 +374,7 @@ class MDP:
                     env.render()
                 if visualize_graph(episode):
                     self.draw_graph(returns, ax=ax_graph)
+
                 if done:
                     returns.append(current_return)
                     timesteps_list.append(t)

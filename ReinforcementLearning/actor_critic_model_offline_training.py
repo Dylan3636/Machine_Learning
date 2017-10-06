@@ -27,17 +27,24 @@ POLICY = 'softmax'
 POLICY_LEARNING_ALGO = 'Q-learning'
 TARGET_MODEL = 1
 VANILLA=0
+TRAIN = 0
 BATCH_SIZE = 5
-ITERATIONS = 1 # Best for 3 40000/42000
+ITERATIONS = 40000 # Best for 3 40000/42000
 TAU = 1e-3
 LR = 1e-3
 BETA = 1e-3
-TRAIN=1
 NUM_STEPS = 50
-NUM_EPISODES = 100000
-DEBUG = 0
-DISPLAY = 0
+NUM_EPISODES = 200
+
+LOAD_MODEL = 1
+DEBUG = 1
+DISPLAY = 1
 print(ITERATIONS)
+
+import matplotlib
+if not DISPLAY:
+    matplotlib.use('Agg')
+
 
 # Preprocessing functions
 def clean_state(state):
@@ -183,23 +190,17 @@ def get_critic_model():
     return model
 
 
-def get_actor_update_operation(actor_model, critic_model):
+def get_actor_update_operation(actor_model):
     policy = actor_model.output
-    Q_values = critic_model.output
-    print(critic_model.input[2])
-    actions = critic_model.inputs[2]
     weights = actor_model.trainable_weights
-    print(weights)
-    print(actions)
-    parameters = np.append(weights, [tf.placeholder('float', shape = [None, ACTION_DIM])])
-    loss = -tf.nn.log_softmax(policy)*Q_values - BETA*entropy(policy)
-    print(tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES))
-    gradients= tf.gradients(ys=loss, xs=parameters)
-    print(gradients)
-    grads = zip(gradients, parameters)
 
+    critic_gradients = tf.placeholder('float', shape=[None, ACTION_DIM])
+    loss = -tf.nn.log_softmax(policy)*critic_gradients - BETA*entropy(policy)
+    gradients= tf.gradients(ys=loss, xs=weights)
+    grads = zip(gradients, weights)
     operation = tf.train.AdamOptimizer(LR).apply_gradients(grads)
-    return operation
+
+    return operation, critic_gradients
 
 
 def get_gradient_operation(critic_model):
@@ -325,29 +326,34 @@ def train_actor_critic_model(sess, models, episodes, gamma, tf_holders, iteratio
             else:
                 print(actor_model.predict([state, reading], batch_size=1).flatten())
 
+K.set_learning_phase(1)  # set learning phase
 session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
 sess = tf.Session(config=session_conf)
 K.set_session(sess)
-K.set_learning_phase(1)  # set learning phase
 
-actor_model = get_vanilla_actor_model() if VANILLA else get_actor_model()
-critic_model = get_critic_action_model()
-if TARGET_MODEL:
-    target_actor_model = get_vanilla_actor_model() if VANILLA else get_actor_model()
-    target_critic_model = get_critic_action_model()
+from keras.models import load_model
+if LOAD_MODEL:
+    target_actor_model = load_model('actor_model_{}.h5'.format(ITERATIONS))
+    target_critic_model = load_model('critic_model_{}.h5'.format(ITERATIONS))
+    actor_model = load_model('actor_model_{}.h5'.format(ITERATIONS))
+    critic_model = load_model('critic_model_{}.h5'.format(ITERATIONS))
+    update_op, action_gradient_holder = get_actor_update_operation(actor_model)
+    gradient_op = get_gradient_operation(critic_model)
 else:
-    target_actor_model=None
-    target_critic_model=None
+    actor_model = get_vanilla_actor_model() if VANILLA else get_actor_model()
+    critic_model = get_critic_action_model()
+    if TARGET_MODEL:
+        target_actor_model = get_vanilla_actor_model() if VANILLA else get_actor_model()
+        target_critic_model = get_critic_action_model()
+    else:
+        target_actor_model=None
+        target_critic_model=None
 
-update_op, action_gradient_holder = get_actor_update_operation(actor_model, critic_model)
-gradient_op = get_gradient_operation(critic_model)
-sess.run(tf.global_variables_initializer())
-train_actor_critic_model(sess, [actor_model, critic_model, target_actor_model, target_critic_model], data, 0.75, [action_gradient_holder,update_op , gradient_op], ITERATIONS, BATCH_SIZE, VANILLA)
+    update_op, action_gradient_holder = get_actor_update_operation(actor_model)
+    gradient_op = get_gradient_operation(critic_model)
+    sess.run(tf.global_variables_initializer())
+    train_actor_critic_model(sess, [actor_model, critic_model, target_actor_model, target_critic_model], data, 0.75, [action_gradient_holder,update_op , gradient_op], ITERATIONS, BATCH_SIZE, VANILLA)
 
-
-import matplotlib
-if not DISPLAY:
-    matplotlib.use('Agg')
 
 from MarkovDecisionProcess import MDP
 mdp = MDP(LENGTH_OF_MAZE ** 2, ACTION_DIM, state_formatter=to_vanilla_state_formatter if VANILLA else state_formatter, method='actor-critic', policy_type=POLICY, actor_model=target_actor_model, critic_model=target_critic_model, target_models=[actor_model, critic_model],sess=sess, random_state=RANDOM_STATE)
@@ -358,4 +364,9 @@ mdp.toolkit.set_critic_gradient_operation(critic_gradient_op=gradient_op)
 from random_maze_environment import random_maze
 env = random_maze(LENGTH_OF_MAZE, NUM_COLOURS, randomize_maze=1, randomize_state=0, random_state=RANDOM_STATE)
 mdp.evaluate_model_in_environment(env, NUM_EPISODES, NUM_STEPS, show_env=DISPLAY, train=TRAIN)
+
+# Saving models
+mdp.actor_model.save('actor_model_{}.h5'.format(ITERATIONS))
+mdp.critic_model.save('critic_model_{}.h5'.format(ITERATIONS))
+
 #MDP.evaluate_maze_model(model=actor_model, policy_type=POLICY, method='policy-network', complex_input=0,state_formatter=vanilla_state_formatter )
