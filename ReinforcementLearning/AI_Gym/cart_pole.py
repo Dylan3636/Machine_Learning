@@ -1,12 +1,20 @@
 import gym
 import numpy as np
 import matplotlib.pyplot as plt
+import os, sys
+sys.path.append(os.path.abspath('../../../KaSeDy/pybot'))
+sys.path.insert(0, os.path.abspath('../'))
 from MarkovDecisionProcess import MDP
 from sklearn.preprocessing import MinMaxScaler
 import time
+import keras.backend as K
 from collections import deque
 from keras.models import Sequential
+from keras.models import Model
 from keras.layers import Dense
+from keras.layers import Input
+from keras.layers import Lambda
+from keras.layers import concatenate
 from keras.layers import Dropout
 from keras.optimizers import Adam
 
@@ -14,8 +22,8 @@ plt.ion()
 def draw_graph(returns, ax):
     ax.cla()
     returns = np.array(returns)
-    ave_returns = [np.mean((returns[i - 10:i])) for i in range(10, len(returns), 10)]
-    ind = list(range(10, len(returns), 10))
+    ave_returns = [np.mean((returns[i - 10:i])) for i in range(10, len(returns), 1)]
+    ind = list(range(10, len(returns), 1))
     ax.plot(ind, ave_returns)
     ax.set_ylabel('Returns')
     ax.set_xlabel('Iteration')
@@ -26,14 +34,49 @@ def solved(timesteps):
     timesteps = np.array(timesteps)
     return np.any(np.array([np.mean((timesteps[i - 100:i])) for i in range(99, len(timesteps), 1)]) > 195)
 
+def rbf(x, c, h):
+    return K.exp(-K.abs(x-c)/h**2)
+
+def build_rbf_model():
+    theta = Input(shape=[1])
+    theta_rbf_1 = Lambda(function=rbf, arguments={'c':-0.2, 'h':0.4})(theta)
+    theta_rbf_2 = Lambda(function=rbf, arguments={'c':0.2, 'h':0.4})(theta)
+    theta_dot = Input(shape=[1])
+    thetas = concatenate([theta_rbf_1, theta_rbf_2, theta_dot])
+    thetas_h = Dense(24, activation='tanh')(thetas)
+
+    x = Input(shape=[1])
+    x_rbf_1 = Lambda(function=rbf, arguments={'c': -3, 'h': 2})(x)
+    x_rbf_2 = Lambda(function=rbf, arguments={'c': -1, 'h': 2})(x)
+    x_rbf_3 = Lambda(function=rbf, arguments={'c': 1, 'h': 2})(x)
+    x_rbf_4 = Lambda(function=rbf, arguments={'c': 3, 'h': 2})(x)
+    x_dot = Input(shape=[1])
+    xs = concatenate([x_rbf_1, x_rbf_2, x_rbf_3, x_rbf_4, x_dot])
+    xs_h = Dense(24, activation='tanh')(xs)
+
+    joined = concatenate([xs_h, thetas_h])
+
+    hidden_2 = Dense(128, activation='tanh')(joined)
+    out = Dense(2, activation='linear')(hidden_2)
+    model = Model(inputs=[x, x_dot, theta, theta_dot], outputs=[out])
+    model.compile(loss='mse', optimizer=Adam(lr=0.01, decay=0.01))
+    return model
+
+def rbf_state_formatter(observations):
+    observations = np.squeeze(observations)
+    return [np.array([observations[0]]), np.array([observations[1]]), np.array([observations[2]]), np.array([observations[3]])]
+
+
 def build_model():
+
     model = Sequential()
-    model.add(Dense(units=128, activation='relu', input_dim=4))
-    model.add(Dropout(0.2))
-    model.add(Dense(units=256, activation='relu'))
-    model.add(Dropout(0.2))
+
+    model.add(Dense(units=24, activation='tanh', input_dim=4))
+    #model.add(Dropout(0.2))
+    model.add(Dense(units=48, activation='tanh'))
+    #model.add(Dropout(0.2))
     model.add(Dense(units=2, activation='linear'))
-    model.compile(loss='mse', optimizer=Adam(lr=0.001) )
+    model.compile(loss='mse', optimizer=Adam(lr=0.01, decay=0.01) )
     return model
 
 env_name ='CartPole-v0'
@@ -57,9 +100,8 @@ print('Action space: {}'.format(env.action_space))
 print('Observation space: {}'.format(env.observation_space))
 
 base_neuron = 256
-mdp = MDP(num_actions=env.action_space.n, state_formatter=state_formatter,recurrent_layer=0, num_inputs=state_dim, num_hidden_neurons=[base_neuron, 2 * base_neuron],
-          num_hidden_layers=1, num_output_neurons=env.action_space.n, epsilon=1.0, gamma=0.99, epsilon_decay=0.9954, dropout_rate=0.2)
-
+mdp = MDP(num_actions=env.action_space.n, state_formatter=rbf_state_formatter,q_model=build_rbf_model(), epsilon=1.0, gamma=0.99, epsilon_decay=0.9954,minimum_epsilon=0, dropout_rate=0.2)
+print(mdp.model.summary())
 scaler = MinMaxScaler()
 scaler.fit([env.observation_space.high, env.observation_space.low])
 
@@ -74,15 +116,22 @@ for episode in episodes:
         if visualize[episode]:
             env.render()
             time.sleep(0.05)
-        if done:
-            print('Episode {} finished after {} timesteps.(Average timesteps: {})'.format(episode, t, np.mean(timesteps_list)))
-            break
         action = mdp.make_decision(np.reshape(previous_observation, (-1, state_dim))) # pick action
         next_observation, reward, done, info = env.step(action) # take action and see results
         if done and t!= 199:
-            reward = -1000
-        if np.random.rand()>0.2 or done: #Dropout
-            mdp.update(previous_observation, action, reward, next_observation, done)
+            reward = 0
+        else:
+            reward /= 10
+        if episode > 0:
+            mdp.update(previous_observation, action, reward, next_observation, done, replay=0.8, dropout=0, log=True,
+                      batch_size=1, minibatch_size=1)
+        else:
+            mdp.update(previous_observation, action, reward, next_observation, done, dropout=1, log=True)
+
+        if done:
+            print('Episode {} finished after {} timesteps.(Average timesteps: {})'.format(episode, t,
+                                                                                          np.mean(timesteps_list)))
+            break
 
         previous_observation = next_observation
     returns.append(mdp.current_return)

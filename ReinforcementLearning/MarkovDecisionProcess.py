@@ -2,7 +2,7 @@ from advanced_networks import network_toolkit
 import numpy as np
 import os
 import sys
-sys.path.insert(0, os.path.abspath('..//..//KaSeDy//pybot'))
+sys.path.append(os.path.abspath('../../KaSeDy/pybot'))
 from tools.Map import Map
 
 from keras.models import Sequential
@@ -119,7 +119,7 @@ class MDP:
     def q_matrix_update(self, state, action, reward, next_state):
         self.Q_matrix[state][action] += self.lr * (reward + self.gamma * max(self.Q_matrix[next_state]) - self.Q_matrix[state][action])
 
-    def _build_NN(self, num_inputs=None, num_hidden_neurons=10, num_hidden_layers=1, num_output_neurons=4, dropout_rate=0.2, lr=0.001, recurrent_layer=0, num_rnn_units=128, lookback=1, convolutional_layer=0, filters=16, kernel_size=2, l2_reg=0.7):
+    def _build_NN(self, num_inputs=None, num_hidden_neurons=10, num_hidden_layers=1, num_output_neurons=4, dropout_rate=0.2, lr=0.001, recurrent_layer=0, num_rnn_units=128, lookback=0, convolutional_layer=0, filters=16, kernel_size=2, l2_reg=0.7):
         num_inputs = self.num_states if num_inputs is None else num_inputs
         model = Sequential()
         num_inputs = self.num_states if num_inputs is None else num_inputs
@@ -166,32 +166,50 @@ class MDP:
 
     def make_decision(self, state):
         state = self.state_formatter(state)
+
         if self.policy_type =='random':
             return self.random_state.choice(range(self.num_actions))
+
         elif self.policy_type == 'epsilon-greedy':
+
             if self.random_state.rand() <= self.epsilon:
                 return self.random_state.choice(range(self.num_actions))
+
             if self.method in ['q-network', 'policy-network']:
-                q_values = np.array(self.model.predict(state)).flatten()
+                if self.target_models is not []:
+                    q_values = np.array(self.target_models[0].predict(state)).flatten()
+                else:
+                    q_values = np.array(self.model.predict(state)).flatten()
+
             elif self.method == 'q-table':
                 q_values = self.Q_matrix[self.get_state_index(state)]
+
             elif self.method == 'actor-critic':
-                q_values = np.array(self.actor_model.predict(state)).flatten()
+                if self.target_models is not []:
+                     q_values = np.array(self.target_models[0].predict(state)).flatten()
+                else:
+                     q_values = np.array(self.actor_model.predict(state)).flatten()
             return np.argmax(q_values)
 
         elif self.policy_type == 'softmax':
             if self.method in ['policy-network', 'actor-critc']:
                 p = np.array(self.model.predict(state)).flatten()
 
-            elif self.method == 'q-network':        
-                tmp = np.exp(np.array(self.model.predict(state).flatten()))              
+            elif self.method == 'q-network':
+                if self.target_models is not []:
+                    tmp = np.array(self.target_models[0].predict(state)).flatten()
+                else:
+                    tmp = np.exp(np.array(self.model.predict(state).flatten()))
                 p = tmp / np.sum(tmp)
                 
             elif self.method == 'q-table':
                 tmp = np.exp(self.Q_matrix[self.get_state_index(state)])
                 p = tmp/np.sum(tmp)
             elif self.method == 'actor-critic':
-                p = np.array(self.actor_model.predict(state)).flatten()
+                if self.target_models is not []:
+                    p = np.array(self.target_models[0].predict(state)).flatten()
+                else:
+                    p = np.array(self.actor_model.predict(state)).flatten()
             print(p)
             return self.random_state.choice(range(len(p)), p=p)
 
@@ -206,7 +224,8 @@ class MDP:
             self.buffer.loc[len(self.buffer), :] = [raw_state, action, raw_next_state, reward, done]
             if done:
                 self.buffer['Total Return'] = self.buffer['Reward'].sum()
-                self.log = concat([self.log, self.buffer], axis=0)
+                self.log = concat([self.buffer, self.log], axis=0)
+                self.log = self.log.iloc[0: min(len(self.log), 10000), :]
                 self.buffer = DataFrame(columns=['Previous State', 'Action Taken', 'Current State', 'Reward', 'Completed'])
         if done:
             self.epsilon = np.max([self.epsilon*self.epsilon_decay, self.minimum_epsilon])
@@ -238,7 +257,7 @@ class MDP:
                     q = np.reshape(q, (-1, len(q)))
                     targets.append(q)
                     states.append(state)
-                self.model.fit(np.array(states)[0], np.array(targets)[0], batch_size=minibatch_size, epochs=1, verbose=0)
+                self.model.fit(states[0], np.array(targets)[0], batch_size=minibatch_size, epochs=1, verbose=0)
 
             else:
                 future_q = np.max(self.model.predict(next_state, batch_size=1).flatten())
@@ -247,6 +266,8 @@ class MDP:
                 q[action] = target
                 q = np.reshape(q, (-1, len(q)))
                 self.model.fit(state, q, batch_size=1, epochs=1, verbose=0)
+            if self.target_models is not []:
+                self.toolkit.update_target_models(self.model, self.target_models[0])
 
         elif self.method == 'actor-critic':
             if self.random_state.rand() < replay:
@@ -254,7 +275,7 @@ class MDP:
             else:
                 episodes = self.buffer.iloc[0, [0,1,2,3]]
             if done:
-                self.toolkit.batch_train_actor_critic_model(models=self.target_models + [self.actor_model, self.critic_model], episodes=episodes, iterations=1, batch_size=batch_size )
+                self.toolkit.batch_train_actor_critic_model(models= [self.actor_model, self.critic_model]+self.target_models, episodes=episodes, iterations=1, batch_size=batch_size )
 
         elif self.method == 'policy-network':
             pass
