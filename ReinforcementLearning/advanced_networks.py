@@ -186,7 +186,7 @@ class network_toolkit:
             d[self.critic_gradient_holder] = gradients
             sess.run([self.actor_update_op], feed_dict=d)
 
-            99954
+
     def batch_train_policy_model(self, models, episodes, gamma, tf_holders, iterations, batch_size, vanilla_actor):
         sess = self.SESSION
         policy_model = models[0]
