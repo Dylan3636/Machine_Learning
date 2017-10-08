@@ -54,10 +54,10 @@ observations = ['focus', 'speedX', 'speedY', 'speedZ', 'opponents', 'rpm', 'trac
 
 # Initialize constants
 ACTION_TYPE = 'Continuous'
-ACTION_DIM = 3
+ACTION_DIM = 2
 ORIENTATION_DIM = 4
-INPUT_DIM = []
-SENSOR_DIM = 8
+INPUT_DIM = [[5], [3], [1], [4]]
+
 
 POLICY = 'softmax'
 POLICY_LEARNING_ALGO = 'Q-learning'
@@ -74,16 +74,15 @@ SIGMAS = [0.3, 0.1]
 
 TRAIN = 0
 BATCH_SIZE = 5
-ITERATIONS = 40000  # Best for 3 40000/42000
+ITERATIONS = 40000
 
 NUM_STEPS = 50
 NUM_EPISODES = 200
 
 LOAD_MODEL = 0
-DEBUG = 0
+DEBUG = 1
 DISPLAY = 1
 
-print(ITERATIONS)
 
 import matplotlib
 if not DISPLAY:
@@ -113,9 +112,9 @@ def observation_formatter(observation, action=None):
     speedX = observation[1]
     speedY = observation[2]
     speedZ = observation[3]
-    speed = np.reshape([speedX, speedY, speedZ], (-1, INPUT_DIM[2]))
-    rpm = np.reshape(observation[5], (-1, INPUT_DIM[3]))
-    wheelVel = np.reshape(observation[7], (-1, INPUT_DIM[4]))
+    speed = np.reshape([speedX, speedY, speedZ], (-1, INPUT_DIM[1]))
+    rpm = np.reshape(observation[5], (-1, INPUT_DIM[2]))
+    wheelVel = np.reshape(observation[7], (-1, INPUT_DIM[3]))
     if action is None:
         return [focus, speed, rpm, wheelVel]
     else:
@@ -171,7 +170,7 @@ def basic_actor_model():
     focus = Input(shape=INPUT_DIM[0])
     speed = Input(shape=INPUT_DIM[1]) # vector of speedX, speedY and speedZ
     rpm = Input(shape=INPUT_DIM[2])
-    wheelSpinVel = Input(shape=INPUT_DIM[4])
+    wheelSpinVel = Input(shape=INPUT_DIM[3])
 
     speedh1 = Dense(32, activation='linear')(speed)
     wheelSpinVelh1 = Dense(32, activation='linear')(wheelSpinVel)
@@ -198,7 +197,7 @@ def basic_critic_model():
     focus = Input(shape=INPUT_DIM[0])
     speed = Input(shape=INPUT_DIM[1]) # vector of speedX, speedY and speedZ
     rpm = Input(shape=INPUT_DIM[2])
-    wheelSpinVel = Input(shape=INPUT_DIM[4])
+    wheelSpinVel = Input(shape=INPUT_DIM[3])
 
     speedh1 = Dense(32, activation='linear')(speed)
     wheelSpinVelh1 = Dense(32, activation='linear')(wheelSpinVel)
@@ -222,7 +221,7 @@ def get_actor_update_operation(actor_model):
     weights = actor_model.trainable_weights
 
     critic_gradients = tf.placeholder('float', shape=[None, ACTION_DIM])
-
+    print(critic_gradients)
     gradients = tf.gradients(ys=policy, xs=weights, grad_ys=-critic_gradients)
     grads = zip(gradients, weights)
     operation = tf.train.AdamOptimizer(LR).apply_gradients(grads)
@@ -233,6 +232,7 @@ def get_actor_update_operation(actor_model):
 def get_gradient_operation(critic_model):
     Q_function = critic_model.outputs
     actions = critic_model.inputs[-1]
+    print(actions)
     action_gradient_op = tf.gradients(Q_function, actions)
     return action_gradient_op
 
@@ -311,6 +311,7 @@ def update_actor_critic_model(sess, models, episodes, tf_holders, iterations, ba
 
         critic_model.train_on_batch(batch_observation_formatter(previous_observations, actions), np.array(targets))
         gradients = get_critic_gradients(sess, tf_holders[2], critic_model, previous_observations, np.array(actions).squeeze(axis=1))
+        print(gradients)
         gradients = np.squeeze(gradients)
         gradients = np.reshape(gradients, (-1, ACTION_DIM))
 
