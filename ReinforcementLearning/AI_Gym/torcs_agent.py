@@ -343,7 +343,8 @@ from keras.models import load_model
 #     gradient_op = get_gradient_operation(critic_model)
 # else:
 
-
+import sys
+sys.path.append(os.path.abspath('../../../gym_torcs'))
 from gym_torcs import TorcsEnv
 
 #### Generate a Torcs environment
