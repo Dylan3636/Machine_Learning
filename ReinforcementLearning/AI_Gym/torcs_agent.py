@@ -55,26 +55,26 @@ observations = ['focus', 'speedX', 'speedY', 'speedZ', 'opponents', 'rpm', 'trac
 # Initialize constants
 ACTION_TYPE = 'Continuous'
 ACTION_DIM = 2
-ORIENTATION_DIM = 4
-INPUT_DIM = [[5], [3], [1], [4]]
+INPUT_DIM = [[21], [3], [1], [4]]
 
 
-POLICY = 'softmax'
-POLICY_LEARNING_ALGO = 'Q-learning'
-GAMMA = 0.75
+POLICY = 'OU'
+GAMMA = 0.99
 TAU = 1e-3
-LR = 1e-3
-BETA = 1e-3
+LR = 1e-4
+EPSILON = 1.0
+EPSILON_DECAY = 0.9998
+MINIMUM_EPSILON = 0.2
 TARGET_MODEL = 1
 VANILLA = 0
 
-THETAS = [0.6, 1.0]
-MEWS = [0.0, 0.5]
-SIGMAS = [0.3, 0.1]
+THETAS = np.array([0.6, 1.0])
+MEWS = np.array([0.0, 0.3])
+SIGMAS = np.array([0.3, 0.1])
 
 TRAIN = 0
-BATCH_SIZE = 5
-ITERATIONS = 40000
+BATCH_SIZE = 1
+ITERATIONS = 1
 
 NUM_STEPS = 50
 NUM_EPISODES = 200
@@ -96,7 +96,7 @@ def action_encoder(action_index):
     encoded_action[action_index] = 1
     return encoded_action
 
-def ou(action, theta, mew, sigma):
+def ou(action, theta, mu, sigma):
     """
     Ornstein-Uhlenbeck process
     :param action: float
@@ -105,34 +105,45 @@ def ou(action, theta, mew, sigma):
     :param sigma: float
     :return:
     """
-    return theta*(action-mew) + RANDOM_STATE.randn()*sigma
+    action = np.array(action)
+    return theta*(mu-action) + RANDOM_STATE.randn(ACTION_DIM)*sigma
 
 def observation_formatter(observation, action=None):
-    focus = np.reshape(observation[0], (-1, INPUT_DIM[0]))
-    speedX = observation[1]
-    speedY = observation[2]
-    speedZ = observation[3]
-    speed = np.reshape([speedX, speedY, speedZ], (-1, INPUT_DIM[1]))
-    rpm = np.reshape(observation[5], (-1, INPUT_DIM[2]))
-    wheelVel = np.reshape(observation[7], (-1, INPUT_DIM[3]))
+    trackPos = observation.trackPos
+    angle = observation.angle
+    comb = [trackPos, angle]
+    focus = np.reshape(np.append(observation.track.flatten(), comb), (1, INPUT_DIM[0][0]))
+    speedX = observation.speedX
+    speedY = observation.speedY
+    speedZ = observation.speedZ
+    speed = np.reshape([speedX, speedY, speedZ], (1, INPUT_DIM[1][0]))
+    rpm = np.reshape(observation.rpm/100.0, (1, INPUT_DIM[2][0]))
+    wheelVel = np.reshape(observation.wheelSpinVel, (1, INPUT_DIM[3][0]))
     if action is None:
         return [focus, speed, rpm, wheelVel]
     else:
-        action = np.reshape(action, (-1, ACTION_DIM))
+        action = np.reshape(action, (1, ACTION_DIM))
         return [focus, speed, rpm, wheelVel, action]
 
 
 def batch_observation_formatter(observations, actions=None):
     tmp = actions
     actions = np.repeat(None, len(observations)) if actions is None else actions
-    formatted_states = []
-    for i, state in enumerate(observations):
-        formatted_states.append(observation_formatter(observations, actions[i]))
-    formatted_states = np.matrix(formatted_states)
+    focuses = []
+    speeds = []
+    rpms = []
+    wheelVels = []
+    for i, observation in enumerate(observations):
+        focus, speed, rpm, wheelVel = observation_formatter(observation)
+        focuses.append(focus)
+        speeds.append(speed)
+        rpms.append(rpm)
+        wheelVels.append(wheelVel)
     if tmp is None:
-        return [np.array(formatted_states[:, 1]), np.array(formatted_states[:, 2]), np.array(formatted_states[:, 3]), np.array(formatted_states[:, 4])]
+        return [np.reshape(focuses, (BATCH_SIZE, INPUT_DIM[0][0])), np.reshape(speeds, (BATCH_SIZE, INPUT_DIM[1][0])), np.reshape(rpms, (BATCH_SIZE, INPUT_DIM[2][0])), np.reshape(wheelVels, (BATCH_SIZE, INPUT_DIM[3][0]))]
+
     else:
-        return [np.array(formatted_states[:, 1]), np.array(formatted_states[:, 2]), np.array(formatted_states[:, 3]), np.array(formatted_states[:, 4]), np.array(formatted_states[:, 5])]
+        return [np.reshape(focuses, (BATCH_SIZE, INPUT_DIM[0][0])), np.reshape(speeds, (BATCH_SIZE, INPUT_DIM[1][0])), np.reshape(rpms, (BATCH_SIZE, INPUT_DIM[2][0])), np.reshape(wheelVels, (BATCH_SIZE, INPUT_DIM[3][0])), np.reshape(actions, (BATCH_SIZE, ACTION_DIM))]
 
 
 
@@ -151,7 +162,7 @@ from keras.models import Input
 from keras.models import Model
 from keras.models import Sequential
 from keras.layers import concatenate
-from keras.layers import add
+from keras.layers import Flatten
 from keras.layers import Dense
 from keras.layers import Dropout
 from keras.optimizers import Adam
@@ -172,21 +183,24 @@ def basic_actor_model():
     rpm = Input(shape=INPUT_DIM[2])
     wheelSpinVel = Input(shape=INPUT_DIM[3])
 
-    speedh1 = Dense(32, activation='linear')(speed)
-    wheelSpinVelh1 = Dense(32, activation='linear')(wheelSpinVel)
+    speedh1 = Dense(32, activation='linear', init='glorot_normal')(speed)
+    wheelSpinVelh1 = Dense(32, activation='linear', init='glorot_normal')(wheelSpinVel)
     combinedSpeed = concatenate([speedh1, wheelSpinVelh1, rpm])
 
-    focush1 = Dense(128, activation='tanh')(focus)
-    combinedSpeedh2 = Dense(128, activation='tanh')(combinedSpeed)
+    focush1 = Dense(150, activation='relu', init='glorot_normal')(focus)
+    combinedSpeedh2 = Dense(150, activation='relu', init='glorot_normal')(combinedSpeed)
     combined_layer = concatenate([focush1, combinedSpeedh2])
 
-    h3 = Dense(512, activation='relu')(combined_layer)
+    h3 = Dense(600, activation='relu', init='glorot_normal')(combined_layer)
 
-    steering = Dense(1, activation='tanh')(h3) #consider adding acceleration as an input to steering
-    acceleration = Dense(1, activation='sigmoid')(h3)
+    steering = Dense(1, activation='tanh', init='glorot_normal')(h3) #consider adding acceleration as an input to steering
+    acceleration = Dense(1, activation='sigmoid', init='glorot_normal')(h3)
 
-    model = Model(inputs=[focus, speed, rpm, wheelSpinVel], outputs=[steering, acceleration])
-    model.compile(loss='mse', optimizer=Adam(lr=1e-3))
+    output = concatenate([steering, acceleration])
+
+    model = Model(inputs=[focus, speed, rpm, wheelSpinVel], outputs=[output])
+    model.compile(loss='mse', optimizer=Adam(lr=1e-4))
+    print(model.summary())
     return model
 
 def basic_critic_model():
@@ -203,36 +217,33 @@ def basic_critic_model():
     wheelSpinVelh1 = Dense(32, activation='linear')(wheelSpinVel)
     combinedSpeed = concatenate([speedh1, wheelSpinVelh1, rpm])
 
-    focush1 = Dense(128, activation='tanh')(focus)
-    combinedSpeedh2 = Dense(128, activation='tanh')(combinedSpeed)
+    focush1 = Dense(64, activation='tanh')(focus)
+    combinedSpeedh2 = Dense(128, activation='linear')(combinedSpeed)
     combined_layer = concatenate([focush1, combinedSpeedh2, actions])
 
     h3 = Dense(512, activation='relu')(combined_layer)
 
-    Q = Dense(2, activation='linear')(h3)
+    Q = Dense(2, activation='linear', init='glorot_normal')(h3)
 
     model = Model(inputs=[focus, speed, rpm, wheelSpinVel, actions], outputs=[Q])
     model.compile(loss='mse', optimizer=Adam(lr=1e-3))
+    print(model.summary())
     return model
 
 
 def get_actor_update_operation(actor_model):
     policy = actor_model.outputs
     weights = actor_model.trainable_weights
-
-    critic_gradients = tf.placeholder('float', shape=[None, ACTION_DIM])
-    print(critic_gradients)
+    critic_gradients = tf.placeholder('float',[None,ACTION_DIM])
     gradients = tf.gradients(ys=policy, xs=weights, grad_ys=-critic_gradients)
     grads = zip(gradients, weights)
     operation = tf.train.AdamOptimizer(LR).apply_gradients(grads)
-
     return operation, critic_gradients
 
 
 def get_gradient_operation(critic_model):
     Q_function = critic_model.outputs
     actions = critic_model.inputs[-1]
-    print(actions)
     action_gradient_op = tf.gradients(Q_function, actions)
     return action_gradient_op
 
@@ -260,42 +271,50 @@ def update_target_models(models):
     critic_target_model.set_weights(target_weights)
 
 def act(actor_model, observation):
-    policy = actor_model.predict(observation)
-    return ou(policy, THETAS, MEWS, SIGMAS)
+    policy = actor_model.predict(observation).flatten()
+    action= np.array(policy) + EPSILON*ou(policy, THETAS, MEWS, SIGMAS)
+    action[0] = max(min(action[0], 1), -1)
+    action[1] = max(min(action[1], 1), 0)
+    print('policy:', policy)
+    print('action:', action)
+    return action
 
 
 def update_actor_critic_model(sess, models, episodes, tf_holders, iterations, batch_size):
     actor_model = models[0]
     critic_model = models[1]
     for iteration in range(iterations):
-        if DEBUG:
-            print('Iteration: {}'.format(iteration))
-        else:
-            print('\r', 'Iteration: {}'.format(iteration), end="")
         targets = []
         previous_observations = []
+        observations = []
         actions = []
+        next_actions = []
         deltas = []
+        rewards=[]
+        id_mask = []
         for _, frame in episodes.sample(batch_size, random_state=RANDOM_STATE).iterrows():
-            previous_observation, actions, reward, observation, done = frame
+            previous_observation, action, reward, observation, done = frame
 
-            state = observation_formatter(previous_observation, actions)
+            state = observation_formatter(previous_observation, action)
             if TARGET_MODEL:
                 q = models[3].predict(state, batch_size=1).flatten()
             else:
                 q = critic_model.predict(state, batch_size=1).flatten()
 
             next_state = observation_formatter(observation)
-            if TARGET_MODEL:
-                next_policy = models[2].predict(next_state, batch_size=1).flatten()
-            else:
-                next_policy = actor_model.predict(next_state, batch_size=1).flatten()
 
             if done:
-                target = reward
+                id_mask.append(np.zeros(ACTION_DIM))
+                target = reward*np.ones(ACTION_DIM)
+                next_action=[0,0]
             else:
-                if POLICY_LEARNING_ALGO == 'OU':
-                    next_action = ou(next_policy, THETAS, MEWS, SIGMAS)
+                id_mask.append(1)
+                if POLICY == 'OU':
+                   if TARGET_MODEL:
+                      next_action = act(models[2], next_state)
+                   else:
+                      next_action = act(actor_model, next_state)
+            
 
                 next_action = np.reshape(next_action, (1, ACTION_DIM))
                 if TARGET_MODEL:
@@ -304,28 +323,33 @@ def update_actor_critic_model(sess, models, episodes, tf_holders, iterations, ba
                     future_q = critic_model.predict(observation_formatter(observation, next_action), batch_size=1).flatten()
                 target = reward + GAMMA * future_q
 
+            rewards.append(reward)
             actions.append(action)
+            next_actions.append(next_action)
             deltas.append(target - q)
             targets.append(target)
+            observations.append(observation)
             previous_observations.append(previous_observation)
-
+        #print('targets: ', targets)
         critic_model.train_on_batch(batch_observation_formatter(previous_observations, actions), np.array(targets))
-        gradients = get_critic_gradients(sess, tf_holders[2], critic_model, previous_observations, np.array(actions).squeeze(axis=1))
-        print(gradients)
-        gradients = np.squeeze(gradients)
-        gradients = np.reshape(gradients, (-1, ACTION_DIM))
+        gradients = np.squeeze(get_critic_gradients(sess, tf_holders[2], critic_model, previous_observations, np.array(actions)))
+        future_gradients = np.squeeze(get_critic_gradients(sess, tf_holders[2], critic_model, observations, np.array(actions)))
+        #gradients = np.reshape(np.array(rewards) + np.array(id_mask)*GAMMA*future_gradients-gradients, (1, ACTION_DIM))
+        #print('gradients: ', gradients)
 
-        d = dict(zip(actor_model.inputs, batch_observation_formatter(observations)))
-        d[tf_holders[0]] = gradients
+        d1 = dict(zip(actor_model.inputs, batch_observation_formatter(previous_observations)))
+        d1[tf_holders[0]] = np.reshape(gradients, [1, ACTION_DIM])
+        d = dict( d1)
         sess.run([tf_holders[1]], feed_dict=d)
 
         if TARGET_MODEL:
             update_target_models(models)
 
         if DEBUG:
-            print([observation, action])
-            print(critic_model.predict(observation_formatter(observation, action), batch_size=1).flatten())
-            print(actor_model.predict(observation_formatter(observation), batch_size=1).flatten())
+            pass
+            #print([observation, action])
+            #print(critic_model.predict(observation_formatter(observation, action), batch_size=1))
+            #print(actor_model.predict(observation_formatter(observation), batch_size=1))
 
 
 K.set_learning_phase(1)  # set learning phase
@@ -350,10 +374,10 @@ from gym_torcs import TorcsEnv
 
 #### Generate a Torcs environment
 # enable vision input, the action is steering only (1 dim continuous action)
-env = TorcsEnv(vision=True, throttle=False)
+#env = TorcsEnv(vision=False, throttle=False)
 
 # without vision input, the action is steering and throttle (2 dim continuous action)
-# env = TorcsEnv(vision=False, throttle=True)
+env = TorcsEnv(vision=False, throttle=True)
 
 # ob = env.reset()  # without torcs relaunch
 
@@ -371,22 +395,33 @@ else:
 update_op, action_gradient_holder = get_actor_update_operation(actor_model)
 gradient_op = get_gradient_operation(critic_model)
 sess.run(tf.global_variables_initializer())
-buffer = pd.DataFrame(columns=['previous observation', 'action', 'reward', 'observation'])
+buffer = pd.DataFrame(columns=['previous observation', 'action', 'reward', 'observation', 'done'])
 
-for episode in range(5):
-    ob = env.reset(relaunch=True)  # with torcs relaunch (avoid memory leak bug in torcs)
-    for move in range(10000):
+for episode in range(400):
+    print('Episode: ', episode)
+    if episode %5 ==0:
+        ob = env.reset(relaunch=True)  # with torcs relaunch (avoid memory leak bug in torcs)
+    else:
+        ob = env.reset()
+    for move in range(1000):
         if TARGET_MODEL:
-            action = act(target_actor_model, ob)
+            action = act(target_actor_model, observation_formatter(ob))
         else:
-            action = act(actor_model, ob)
+            action = act(actor_model, observation_formatter(ob))
+        action = action.flatten()
         new_ob, reward, done, _ = env.step(action)
-        buffer.iloc[len(buffer), :] = [ob, action, reward, new_ob, done]
+        reward = reward
+        print('\nq-value: ', target_critic_model.predict(observation_formatter(ob, action)))
+        print('reward: ', reward, '\n')
+        buffer.loc[len(buffer), :] = [ob, action, reward, new_ob, done]
         ob = new_ob
         update_actor_critic_model(sess, [actor_model, critic_model, target_actor_model, target_critic_model], buffer,
                                   [action_gradient_holder, update_op, gradient_op], ITERATIONS, BATCH_SIZE)
+        EPSILON = max(EPSILON*EPSILON_DECAY, MINIMUM_EPSILON)
+        #print('\nepsilon: ', EPSILON, '\n')
         if done:
             break
+        
 # shut down torcs
 env.end()
 
