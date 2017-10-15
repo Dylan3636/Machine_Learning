@@ -21,7 +21,7 @@ import pandas as pd
 
 """Get an Observation from the environment.
         # Each observation vectors are numpy array.
-        # focus, opponents, track sensors are scaled into [0, 1]. When the agent
+        # focus, opponents, track sensors are scaled into [0, 1]. When the agents
         # is out of the road, sensor variables return -1/200.
         # rpm, wheelSpinVel are raw values and then needed to be preprocessed.
         # vision is given as a tensor with size of (64*64, 3) = (4096, 3) <-- rgb
@@ -176,7 +176,7 @@ def entropy(policy):
 
 def basic_actor_model():
     #track = Input(shape=INPUT_DIM[3]) Use either track or focus
-    #opponents = Input(shape=[INPUT_DIM[2]]) Most likely won't use as agent is racing by itself
+    #opponents = Input(shape=[INPUT_DIM[2]]) Most likely won't use as agents is racing by itself
 
     focus = Input(shape=INPUT_DIM[0])
     speed = Input(shape=INPUT_DIM[1]) # vector of speedX, speedY and speedZ
@@ -205,7 +205,7 @@ def basic_actor_model():
 
 def basic_critic_model():
     #track = Input(shape=INPUT_DIM[3]) Use either track or focus
-    #opponents = Input(shape=[INPUT_DIM[2]]) Most likely won't use as agent is racing by itself
+    #opponents = Input(shape=[INPUT_DIM[2]]) Most likely won't use as agents is racing by itself
 
     actions = Input(shape=[ACTION_DIM])
     focus = Input(shape=INPUT_DIM[0])
@@ -381,7 +381,7 @@ env = TorcsEnv(vision=False, throttle=True)
 
 # ob = env.reset()  # without torcs relaunch
 
-# Generate an agent
+# Generate an agents
 actor_model = basic_actor_model()
 critic_model = basic_critic_model()
 if TARGET_MODEL:

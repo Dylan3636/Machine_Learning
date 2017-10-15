@@ -2,33 +2,19 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="fbc860bd-ed76-4e78-9b39-0c5dbfab78f8" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/agent/MarkovDecisionProcess.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/agent/__init__.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/environments/__init__.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/environments/environment_tools" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/environments/random_maze/Map.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/environments/random_maze/__init__.py" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/../../KaSeDy/pybot/tools/Map.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/AI_Gym/model_evaluator.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/MarkovDecisionProcess.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/random_maze_model_no_display.py" afterPath="" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/AI_Gym/cart_pole.py" afterPath="$PROJECT_DIR$/environments/cart_pole/cart_pole.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/AI_Gym/gym_template.py" afterPath="$PROJECT_DIR$/environments/gym_template.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/AI_Gym/qnn_cart_model.h5" afterPath="$PROJECT_DIR$/environments/cart_pole/qnn_cart_model.h5" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/AI_Gym/qnn_cart_model_1.h5" afterPath="$PROJECT_DIR$/environments/cart_pole/qnn_cart_model_1.h5" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/AI_Gym/torcs_agent.py" afterPath="$PROJECT_DIR$/environments/torcs/torcs_agent.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/PartiallyObservedMarkovDecisionProcess.py" afterPath="$PROJECT_DIR$/agent/PartiallyObservedMarkovDecisionProcess.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/actor_critic_model_offline_training.py" afterPath="$PROJECT_DIR$/environments/random_maze/actor_critic_model_offline_training.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/advanced_networks.py" afterPath="$PROJECT_DIR$/agent/advanced_networks.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/map_policy_gradient.py" afterPath="$PROJECT_DIR$/environments/random_maze/maze_mc_policy_gradient.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/random_maze_environment.py" afterPath="$PROJECT_DIR$/environments/random_maze/random_maze_environment.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/BayesFilter.py" afterPath="$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/BayesFilter.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/ExtendedKalmanFilter.py" afterPath="$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/ExtendedKalmanFilter.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/GridLocalization.py" afterPath="$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/GridLocalization.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/KalmanFilter.py" afterPath="$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/KalmanFilter.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/MarkovChainLocalization.py" afterPath="$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/MarkovChainLocalization.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/environments/random_maze/maze_q_table.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/agent/MarkovDecisionProcess.py" afterPath="$PROJECT_DIR$/agents/MarkovDecisionProcess.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/agent/PartiallyObservedMarkovDecisionProcess.py" afterPath="$PROJECT_DIR$/agents/PartiallyObservedMarkovDecisionProcess.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/agent/__init__.py" afterPath="$PROJECT_DIR$/agents/__init__.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/agent/advanced_networks.py" afterPath="$PROJECT_DIR$/agents/advanced_networks.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/environments/environment_tools" afterPath="$PROJECT_DIR$/environments/tools.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/environments/random_maze/actor_critic_model_offline_training.py" afterPath="$PROJECT_DIR$/environments/random_maze/maze_actor_critic_model_ddpg.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/log_data_episode_5000.csv" afterPath="$PROJECT_DIR$/environments/random_maze/log_data_episode_5000.csv" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/environments/__init__.py" afterPath="$PROJECT_DIR$/environments/__init__.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/environments/cart_pole/cart_pole.py" afterPath="$PROJECT_DIR$/environments/cart_pole/cart_pole.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/environments/random_maze/maze_mc_policy_gradient.py" afterPath="$PROJECT_DIR$/environments/random_maze/maze_mc_policy_gradient.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/environments/torcs/torcs_agent.py" afterPath="$PROJECT_DIR$/environments/torcs/torcs_agent.py" />
     </list>
     <ignored path="ReinforcementLearning.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -48,18 +34,93 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="375">
-      <file leaf-file-name="actor_critic_model_offline_training.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/environments/random_maze/actor_critic_model_offline_training.py">
+      <file leaf-file-name="maze_actor_critic_model_ddpg.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/environments/random_maze/maze_actor_critic_model_ddpg.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="7">
-              <caret line="358" column="37" lean-forward="false" selection-start-line="358" selection-start-column="37" selection-end-line="358" selection-end-column="37" />
+            <state relative-caret-position="695">
+              <caret line="49" column="20" lean-forward="true" selection-start-line="49" selection-start-column="20" selection-end-line="49" selection-end-column="20" />
+              <folding>
+                <element signature="e#99#108#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="MarkovDecisionProcess.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/agents/MarkovDecisionProcess.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1666">
+              <caret line="96" column="123" lean-forward="true" selection-start-line="96" selection-start-column="123" selection-end-line="96" selection-end-column="123" />
+              <folding>
+                <element signature="e#0#18#0" expanded="true" />
+                <element signature="e#7386#9333#0" expanded="false" />
+                <element signature="e#9380#11435#0" expanded="false" />
+                <element signature="e#11583#14686#0" expanded="false" />
+                <element signature="e#14896#17088#0" expanded="false" />
+                <element signature="e#17254#18429#0" expanded="false" />
+                <element signature="e#18635#20762#0" expanded="false" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="agent_tests" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/agent_tests">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="398">
+              <caret line="458" column="24" lean-forward="false" selection-start-line="458" selection-start-column="24" selection-end-line="458" selection-end-column="24" />
+              <folding>
+                <element signature="e#8655#10141#0" expanded="false" />
+                <element signature="e#10223#10535#0" expanded="false" />
+                <element signature="e#10562#11774#0" expanded="false" />
+                <element signature="e#11805#13085#0" expanded="false" />
+                <element signature="e#19390#25402#0" expanded="false" />
+                <marker date="1508068789838" expanded="false" signature="906:8552" ph="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="maze_q_table.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/environments/random_maze/maze_q_table.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="378">
+              <caret line="18" column="13" lean-forward="true" selection-start-line="18" selection-start-column="13" selection-end-line="18" selection-end-column="13" />
+              <folding>
+                <element signature="e#100#109#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="tools.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/environments/tools.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="42">
+              <caret line="2" column="70" lean-forward="true" selection-start-line="2" selection-start-column="70" selection-end-line="2" selection-end-column="70" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="training_Q_model_from_data.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/training_Q_model_from_data.py">
+      <file leaf-file-name="PartiallyObservedMarkovDecisionProcess.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/agents/PartiallyObservedMarkovDecisionProcess.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="243">
+              <caret line="103" column="58" lean-forward="false" selection-start-line="103" selection-start-column="43" selection-end-line="103" selection-end-column="58" />
+              <folding>
+                <element signature="e#2527#3550#0" expanded="false" />
+                <element signature="e#3704#4837#0" expanded="false" />
+                <element signature="e#13145#19612#0" expanded="false" />
+                <element signature="e#19634#26993#0" expanded="false" />
+                <element signature="e#27015#34503#0" expanded="false" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="__init__.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/environments/random_maze/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="0">
               <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
@@ -68,92 +129,14 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="BayesFilter.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/BayesFilter.py">
+      <file leaf-file-name="advanced_networks.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/agents/advanced_networks.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="945">
-              <caret line="45" column="15" lean-forward="true" selection-start-line="45" selection-start-column="15" selection-end-line="45" selection-end-column="15" />
+            <state relative-caret-position="218">
+              <caret line="96" column="0" lean-forward="false" selection-start-line="96" selection-start-column="0" selection-end-line="96" selection-end-column="0" />
               <folding>
-                <element signature="e#0#9#0" expanded="true" />
+                <element signature="e#8274#9277#0" expanded="false" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="Map.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/environments/random_maze/Map.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="126">
-              <caret line="103" column="0" lean-forward="false" selection-start-line="103" selection-start-column="0" selection-end-line="103" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="ExtendedKalmanFilter.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/ExtendedKalmanFilter.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-21">
-              <caret line="5" column="13" lean-forward="true" selection-start-line="5" selection-start-column="13" selection-end-line="5" selection-end-column="13" />
-              <folding>
-                <element signature="e#0#18#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="kalmantest.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/kalmantest.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="42">
-              <caret line="2" column="19" lean-forward="true" selection-start-line="2" selection-start-column="19" selection-end-line="2" selection-end-column="19" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="MarkovChainLocalization.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/MarkovChainLocalization.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="105">
-              <caret line="38" column="0" lean-forward="true" selection-start-line="38" selection-start-column="0" selection-end-line="38" selection-end-column="0" />
-              <folding>
-                <element signature="e#0#18#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="GridLocalization.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/GridLocalization.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="630">
-              <caret line="30" column="104" lean-forward="false" selection-start-line="30" selection-start-column="104" selection-end-line="30" selection-end-column="104" />
-              <folding>
-                <element signature="e#0#18#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="KalmanFilter.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/KalmanFilter.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2331">
-              <caret line="111" column="14" lean-forward="false" selection-start-line="111" selection-start-column="14" selection-end-line="111" selection-end-column="14" />
-              <folding>
-                <element signature="e#0#18#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="fromnumeric.py" pinned="false" current-in-tab="false">
-        <entry file="file://C:/ProgramData/Anaconda2/envs/tensorflow/Lib/site-packages/numpy/core/fromnumeric.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="179">
-              <caret line="2719" column="0" lean-forward="false" selection-start-line="2719" selection-start-column="0" selection-end-line="2719" selection-end-column="0" />
-              <folding />
             </state>
           </provider>
         </entry>
@@ -179,6 +162,7 @@
       <find>3</find>
       <find>titl</find>
       <find>gl</find>
+      <find>product</find>
     </findStrings>
     <replaceStrings>
       <replace>self.random_state.</replace>
@@ -186,7 +170,7 @@
     </replaceStrings>
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../KaSeDy" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
@@ -200,17 +184,19 @@
         <option value="$PROJECT_DIR$/advanced_networks.py" />
         <option value="$PROJECT_DIR$/actor_critic_model_offline_training.py" />
         <option value="$PROJECT_DIR$/PartiallyObservedMarkovDecisionProcess.py" />
-        <option value="$PROJECT_DIR$/agent_tests" />
         <option value="$PROJECT_DIR$/MarkovDecisionProcess.py" />
-        <option value="$PROJECT_DIR$/environments/__init__.py" />
         <option value="$PROJECT_DIR$/environments/environment_tools" />
-        <option value="$PROJECT_DIR$/environments/random_maze/actor_critic_model_offline_training.py" />
         <option value="$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/ExtendedKalmanFilter.py" />
         <option value="$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/MarkovChainLocalization.py" />
         <option value="$PROJECT_DIR$/environments/random_maze/Map.py" />
         <option value="$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/BayesFilter.py" />
         <option value="$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/GridLocalization.py" />
         <option value="$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/KalmanFilter.py" />
+        <option value="$PROJECT_DIR$/environments/__init__.py" />
+        <option value="$PROJECT_DIR$/environments/random_maze/actor_critic_model_offline_training.py" />
+        <option value="$PROJECT_DIR$/agent_tests" />
+        <option value="$PROJECT_DIR$/environments/random_maze/maze_q_table.py" />
+        <option value="$PROJECT_DIR$/agents/MarkovDecisionProcess.py" />
       </list>
     </option>
   </component>
@@ -268,8 +254,18 @@
               <option name="myItemId" value="ReinforcementLearning" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
             </PATH_ELEMENT>
+          </PATH>
+          <PATH>
             <PATH_ELEMENT>
-              <option name="myItemId" value="pybot" />
+              <option name="myItemId" value="ReinforcementLearning" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ReinforcementLearning" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ReinforcementLearning" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -283,11 +279,33 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="pybot" />
+              <option name="myItemId" value="ReinforcementLearning" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="tools" />
+              <option name="myItemId" value="environments" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ReinforcementLearning" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ReinforcementLearning" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ReinforcementLearning" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="environments" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="random_maze" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -301,22 +319,12 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="pybot" />
+              <option name="myItemId" value="ReinforcementLearning" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="StateEstimation" />
+              <option name="myItemId" value="agents" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ReinforcementLearning" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ReinforcementLearning" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
             </PATH_ELEMENT>
           </PATH>
         </subPane>
@@ -353,7 +361,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.KalmanFilter">
+  <component name="RunManager" selected="Python.actor_critic_model_offline_training">
     <configuration default="false" name="random_maze_model_no_display" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -384,7 +392,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="ReinforcementLearning" />
-      <option name="SCRIPT_NAME" value="C:\Users\dylan\Documents\GitHub\Machine_Learning\ReinforcementLearning\environments\random_maze\actor_critic_model_offline_training.py" />
+      <option name="SCRIPT_NAME" value="C:\Users\dylan\Documents\GitHub\Machine_Learning\ReinforcementLearning\environments\random_maze\maze_actor_critic_model_ddpg.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -549,10 +557,10 @@
     </list>
     <recent_temporary>
       <list size="5">
-        <item index="0" class="java.lang.String" itemvalue="Python.KalmanFilter" />
-        <item index="1" class="java.lang.String" itemvalue="Python.BayesFilter" />
-        <item index="2" class="java.lang.String" itemvalue="Python.cart_pole" />
-        <item index="3" class="java.lang.String" itemvalue="Python.actor_critic_model_offline_training" />
+        <item index="0" class="java.lang.String" itemvalue="Python.actor_critic_model_offline_training" />
+        <item index="1" class="java.lang.String" itemvalue="Python.KalmanFilter" />
+        <item index="2" class="java.lang.String" itemvalue="Python.BayesFilter" />
+        <item index="3" class="java.lang.String" itemvalue="Python.cart_pole" />
         <item index="4" class="java.lang.String" itemvalue="Python.random_maze_model_no_display" />
       </list>
     </recent_temporary>
@@ -590,6 +598,14 @@
       <option name="presentableId" value="Default" />
       <updated>1506707173085</updated>
     </task>
+    <task id="LOCAL-00001" summary="reorginized files">
+      <created>1508066621423</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1508066621423</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -597,14 +613,14 @@
     <editor active="true" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32941177" sideWeight="0.5150376" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32941177" sideWeight="0.5085929" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Documentation" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="FLOATING" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" x="91" y="91" width="1738" height="848" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32941177" sideWeight="0.4849624" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32941177" sideWeight="0.48066595" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32941177" sideWeight="0.495671" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32941177" sideWeight="0.4848485" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32941177" sideWeight="0.4978355" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25510204" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32941177" sideWeight="0.495671" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32941177" sideWeight="0.4914071" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25510204" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32941177" sideWeight="0.4914071" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
@@ -643,6 +659,10 @@
   <component name="VcsContentAnnotationSettings">
     <option name="myLimit" value="2678400000" />
   </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="reorginized files" />
+    <option name="LAST_COMMIT_MESSAGE" value="reorginized files" />
+  </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <option name="time" value="5" />
@@ -658,15 +678,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/environments/random_maze/actor_critic_model_offline_training.py">
+    <entry file="file://$PROJECT_DIR$/environments/random_maze/maze_actor_critic_model_ddpg.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="4914">
           <caret line="234" column="111" lean-forward="false" selection-start-line="234" selection-start-column="111" selection-end-line="234" selection-end-column="111" />
-          <folding />
+          <folding>
+            <element signature="e#99#108#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/agent/advanced_networks.py">
+    <entry file="file://$PROJECT_DIR$/agents/advanced_networks.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3738">
           <caret line="178" column="37" lean-forward="false" selection-start-line="178" selection-start-column="37" selection-end-line="178" selection-end-column="37" />
@@ -676,20 +698,18 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/agent/MarkovDecisionProcess.py">
+    <entry file="file://$PROJECT_DIR$/agents/MarkovDecisionProcess.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="294">
           <caret line="17" column="25" lean-forward="false" selection-start-line="17" selection-start-column="25" selection-end-line="17" selection-end-column="25" />
           <folding>
-            <element signature="e#1089#4732#0" expanded="false" />
-            <element signature="e#4922#5885#0" expanded="false" />
-            <element signature="e#6346#8293#0" expanded="false" />
-            <element signature="e#8346#8874#0" expanded="false" />
-            <element signature="e#8920#10997#0" expanded="false" />
-            <element signature="e#11145#14248#0" expanded="false" />
-            <element signature="e#14458#16650#0" expanded="false" />
-            <element signature="e#16816#17991#0" expanded="false" />
-            <element signature="e#18197#20324#0" expanded="false" />
+            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#7386#9333#0" expanded="false" />
+            <element signature="e#9380#11435#0" expanded="false" />
+            <element signature="e#11583#14686#0" expanded="false" />
+            <element signature="e#14896#17088#0" expanded="false" />
+            <element signature="e#17254#18429#0" expanded="false" />
+            <element signature="e#18635#20762#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -741,15 +761,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/environments/random_maze/actor_critic_model_offline_training.py">
+    <entry file="file://$PROJECT_DIR$/environments/random_maze/maze_actor_critic_model_ddpg.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="7644">
           <caret line="364" column="109" lean-forward="false" selection-start-line="364" selection-start-column="109" selection-end-line="364" selection-end-column="109" />
-          <folding />
+          <folding>
+            <element signature="e#99#108#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/agent/advanced_networks.py">
+    <entry file="file://$PROJECT_DIR$/agents/advanced_networks.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1176">
           <caret line="56" column="0" lean-forward="false" selection-start-line="56" selection-start-column="0" selection-end-line="56" selection-end-column="0" />
@@ -767,20 +789,18 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/agent/MarkovDecisionProcess.py">
+    <entry file="file://$PROJECT_DIR$/agents/MarkovDecisionProcess.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="609">
           <caret line="32" column="320" lean-forward="false" selection-start-line="32" selection-start-column="320" selection-end-line="32" selection-end-column="320" />
           <folding>
-            <element signature="e#1089#4732#0" expanded="false" />
-            <element signature="e#4922#5885#0" expanded="false" />
-            <element signature="e#6346#8293#0" expanded="false" />
-            <element signature="e#8346#8874#0" expanded="false" />
-            <element signature="e#8920#10997#0" expanded="false" />
-            <element signature="e#11145#14248#0" expanded="false" />
-            <element signature="e#14458#16650#0" expanded="false" />
-            <element signature="e#16816#17991#0" expanded="false" />
-            <element signature="e#18197#20324#0" expanded="false" />
+            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#7386#9333#0" expanded="false" />
+            <element signature="e#9380#11435#0" expanded="false" />
+            <element signature="e#11583#14686#0" expanded="false" />
+            <element signature="e#14896#17088#0" expanded="false" />
+            <element signature="e#17254#18429#0" expanded="false" />
+            <element signature="e#18635#20762#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -800,20 +820,18 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/agent/MarkovDecisionProcess.py">
+    <entry file="file://$PROJECT_DIR$/agents/MarkovDecisionProcess.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="12558">
           <caret line="938" column="24" lean-forward="false" selection-start-line="938" selection-start-column="24" selection-end-line="938" selection-end-column="24" />
           <folding>
-            <element signature="e#1089#4732#0" expanded="false" />
-            <element signature="e#4922#5885#0" expanded="false" />
-            <element signature="e#6346#8293#0" expanded="false" />
-            <element signature="e#8346#8874#0" expanded="false" />
-            <element signature="e#8920#10997#0" expanded="false" />
-            <element signature="e#11145#14248#0" expanded="false" />
-            <element signature="e#14458#16650#0" expanded="false" />
-            <element signature="e#16816#17991#0" expanded="false" />
-            <element signature="e#18197#20324#0" expanded="false" />
+            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#7386#9333#0" expanded="false" />
+            <element signature="e#9380#11435#0" expanded="false" />
+            <element signature="e#11583#14686#0" expanded="false" />
+            <element signature="e#14896#17088#0" expanded="false" />
+            <element signature="e#17254#18429#0" expanded="false" />
+            <element signature="e#18635#20762#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -848,14 +866,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/environments/random_maze/random_maze_environment.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-100">
-          <caret line="111" column="123" lean-forward="false" selection-start-line="111" selection-start-column="123" selection-end-line="111" selection-end-column="123" />
           <folding />
         </state>
       </provider>
@@ -900,104 +910,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/agent/PartiallyObservedMarkovDecisionProcess.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1302">
-          <caret line="103" column="58" lean-forward="false" selection-start-line="103" selection-start-column="43" selection-end-line="103" selection-end-column="58" />
-          <folding>
-            <element signature="e#2527#3550#0" expanded="false" />
-            <element signature="e#3704#4837#0" expanded="false" />
-            <element signature="e#13145#19612#0" expanded="false" />
-            <element signature="e#19634#26993#0" expanded="false" />
-            <element signature="e#27015#34503#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/agent_tests">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="147">
-          <caret line="225" column="0" lean-forward="false" selection-start-line="225" selection-start-column="0" selection-end-line="225" selection-end-column="0" />
-          <folding>
-            <element signature="e#7921#9407#0" expanded="false" />
-            <element signature="e#9489#9801#0" expanded="false" />
-            <element signature="e#9828#11040#0" expanded="false" />
-            <element signature="e#11071#12351#0" expanded="false" />
-            <element signature="e#12384#18621#0" expanded="false" />
-            <element signature="e#18656#24668#0" expanded="false" />
-            <marker date="1508027237004" expanded="false" signature="172:7818" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/agent/MarkovDecisionProcess.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="231">
-          <caret line="271" column="0" lean-forward="false" selection-start-line="271" selection-start-column="0" selection-end-line="271" selection-end-column="0" />
-          <folding>
-            <element signature="e#1089#4732#0" expanded="false" />
-            <element signature="e#4922#5885#0" expanded="false" />
-            <element signature="e#6346#8293#0" expanded="false" />
-            <element signature="e#8346#8874#0" expanded="false" />
-            <element signature="e#8920#10997#0" expanded="false" />
-            <element signature="e#11145#14248#0" expanded="false" />
-            <element signature="e#14458#16650#0" expanded="false" />
-            <element signature="e#16816#17991#0" expanded="false" />
-            <element signature="e#18197#20324#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/agent/advanced_networks.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="218">
-          <caret line="96" column="0" lean-forward="false" selection-start-line="96" selection-start-column="0" selection-end-line="96" selection-end-column="0" />
-          <folding>
-            <element signature="e#8274#9277#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/environments/random_maze/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/environments/environment_tools">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="21">
-          <caret line="1" column="0" lean-forward="false" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/environments/random_maze/actor_critic_model_offline_training.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="7">
-          <caret line="358" column="37" lean-forward="false" selection-start-line="358" selection-start-column="37" selection-end-line="358" selection-end-column="37" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/training_Q_model_from_data.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/environments/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -1011,7 +923,7 @@
         <state relative-caret-position="105">
           <caret line="38" column="0" lean-forward="true" selection-start-line="38" selection-start-column="0" selection-end-line="38" selection-end-column="0" />
           <folding>
-            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#0#18#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -1037,7 +949,7 @@
         <state relative-caret-position="630">
           <caret line="30" column="104" lean-forward="false" selection-start-line="30" selection-start-column="104" selection-end-line="30" selection-end-column="104" />
           <folding>
-            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#0#18#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -1047,7 +959,7 @@
         <state relative-caret-position="945">
           <caret line="45" column="15" lean-forward="true" selection-start-line="45" selection-start-column="15" selection-end-line="45" selection-end-column="15" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
+            <element signature="e#0#9#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -1057,7 +969,7 @@
         <state relative-caret-position="-21">
           <caret line="5" column="13" lean-forward="true" selection-start-line="5" selection-start-column="13" selection-end-line="5" selection-end-column="13" />
           <folding>
-            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#0#18#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -1072,10 +984,125 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/../../KaSeDy/pybot/StateEstimation/KalmanFilter.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2331">
-          <caret line="111" column="14" lean-forward="false" selection-start-line="111" selection-start-column="14" selection-end-line="111" selection-end-column="14" />
+        <state relative-caret-position="294">
+          <caret line="14" column="12" lean-forward="false" selection-start-line="14" selection-start-column="12" selection-end-line="14" selection-end-column="12" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/training_Q_model_from_data.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/environments/random_maze/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/environments/random_maze/random_maze_environment.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="21">
+          <caret line="111" column="51" lean-forward="true" selection-start-line="111" selection-start-column="51" selection-end-line="111" selection-end-column="51" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/environments/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="1" lean-forward="false" selection-start-line="0" selection-start-column="1" selection-end-line="0" selection-end-column="1" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/agents/advanced_networks.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="218">
+          <caret line="96" column="0" lean-forward="false" selection-start-line="96" selection-start-column="0" selection-end-line="96" selection-end-column="0" />
+          <folding>
+            <element signature="e#8274#9277#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/environments/random_maze/maze_actor_critic_model_ddpg.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="695">
+          <caret line="49" column="20" lean-forward="true" selection-start-line="49" selection-start-column="20" selection-end-line="49" selection-end-column="20" />
+          <folding>
+            <element signature="e#99#108#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/agent_tests">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="398">
+          <caret line="458" column="24" lean-forward="false" selection-start-line="458" selection-start-column="24" selection-end-line="458" selection-end-column="24" />
+          <folding>
+            <element signature="e#8655#10141#0" expanded="false" />
+            <element signature="e#10223#10535#0" expanded="false" />
+            <element signature="e#10562#11774#0" expanded="false" />
+            <element signature="e#11805#13085#0" expanded="false" />
+            <element signature="e#19390#25402#0" expanded="false" />
+            <marker date="1508068789838" expanded="false" signature="906:8552" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/environments/tools.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="42">
+          <caret line="2" column="70" lean-forward="true" selection-start-line="2" selection-start-column="70" selection-end-line="2" selection-end-column="70" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/agents/PartiallyObservedMarkovDecisionProcess.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="243">
+          <caret line="103" column="58" lean-forward="false" selection-start-line="103" selection-start-column="43" selection-end-line="103" selection-end-column="58" />
+          <folding>
+            <element signature="e#2527#3550#0" expanded="false" />
+            <element signature="e#3704#4837#0" expanded="false" />
+            <element signature="e#13145#19612#0" expanded="false" />
+            <element signature="e#19634#26993#0" expanded="false" />
+            <element signature="e#27015#34503#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/agents/MarkovDecisionProcess.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1666">
+          <caret line="96" column="123" lean-forward="true" selection-start-line="96" selection-start-column="123" selection-end-line="96" selection-end-column="123" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#7386#9333#0" expanded="false" />
+            <element signature="e#9380#11435#0" expanded="false" />
+            <element signature="e#11583#14686#0" expanded="false" />
+            <element signature="e#14896#17088#0" expanded="false" />
+            <element signature="e#17254#18429#0" expanded="false" />
+            <element signature="e#18635#20762#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/environments/random_maze/maze_q_table.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="378">
+          <caret line="18" column="13" lean-forward="true" selection-start-line="18" selection-start-column="13" selection-end-line="18" selection-end-column="13" />
+          <folding>
+            <element signature="e#100#109#0" expanded="true" />
           </folding>
         </state>
       </provider>

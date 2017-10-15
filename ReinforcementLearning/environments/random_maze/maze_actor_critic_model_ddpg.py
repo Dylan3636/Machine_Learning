@@ -7,7 +7,8 @@ Created on Tue Sep 26 23:34:07 2017
 
 #setting seed
 import os
-
+import sys
+sys.path.append(os.path.abspath('..//..//'))
 os.environ['PYTHONHASHSEED'] = '0'
 import numpy as np
 SEED = 5  # 15,485,863
@@ -40,7 +41,6 @@ NUM_EPISODES = 50000
 LOAD_MODEL = 0
 DEBUG = 0
 DISPLAY = 1
-print(ITERATIONS)
 
 import matplotlib
 if not DISPLAY:
@@ -355,8 +355,8 @@ else:
     sess.run(tf.global_variables_initializer())
     train_actor_critic_model(sess, [actor_model, critic_model, target_actor_model, target_critic_model], data, 0.75, [action_gradient_holder,update_op , gradient_op], ITERATIONS, BATCH_SIZE, VANILLA)
 
-from agent.MarkovDecisionProcess import MDP
-import environments.environment_tools as et
+from agents.MarkovDecisionProcess import MDP
+from environments.tools import evaluate_model_in_environment
 mdp = MDP(LENGTH_OF_MAZE ** 2, ACTION_DIM, state_formatter=to_vanilla_state_formatter if VANILLA else state_formatter, method='actor-critic', policy_type=POLICY, actor_model=actor_model, critic_model=critic_model, target_models=[target_actor_model, target_critic_model],sess=sess, random_state=RANDOM_STATE)
 mdp.toolkit.set_formatters(state_formatter=state_formatter, batch_state_formatter=batch_state_formatter)
 mdp.toolkit.set_actor_update_op(actor_update_op=update_op, critic_gradient_holder=action_gradient_holder)
@@ -364,7 +364,7 @@ mdp.toolkit.set_critic_gradient_operation(critic_gradient_op=gradient_op)
 
 from environments.random_maze.random_maze_environment import random_maze
 env = random_maze(LENGTH_OF_MAZE, NUM_COLOURS, randomize_maze=1, randomize_state=1, random_state=RANDOM_STATE)
-et.evaluate_model_in_environment(env, NUM_EPISODES, NUM_STEPS, show_env=list(range(0,NUM_EPISODES,100)), train=TRAIN)
+evaluate_model_in_environment(mdp, env, NUM_EPISODES, NUM_STEPS, show_env=list(range(0,NUM_EPISODES,100)), train=TRAIN)
 
 # Saving models
 mdp.actor_model.save('actor_model_{}_maze_length_{}.h5'.format(ITERATIONS, LENGTH_OF_MAZE))

@@ -7,7 +7,7 @@ import numpy as np
 
 sys.path.append(os.path.abspath('../../../KaSeDy/pybot'))
 sys.path.insert(0, os.path.abspath('../'))
-from agent.MarkovDecisionProcess import MDP
+from agents.MarkovDecisionProcess import MDP
 from sklearn.preprocessing import MinMaxScaler
 import time
 import keras.backend as K

@@ -1,5 +1,3 @@
-from itertools import product
-
 import numpy as np
 from keras.layers import Dense
 from keras.layers import Dropout
@@ -12,17 +10,17 @@ from keras.optimizers import Adam
 from keras.regularizers import l2
 from pandas import DataFrame, concat
 
-from agent.advanced_networks import network_toolkit
+from agents.advanced_networks import network_toolkit
 
 
 class MDP:
     """Basic implementation of a finite Markov Decision Process    
     """
 
-    def __init__(self, num_states=None, num_actions=None, gamma=0.9,lr=1e-3, method ='q-network', policy_type='epsilon-greedy', epsilon = 1e-2, epsilon_decay=0.995, minimum_epsilon=1e-2,
-                 transition_model=None, immediate_rewards=None, value_function=None, function_type=0, policy=None, init_Q_matrix=None, q_model=None, v_model=None, actor_model=None, critic_model=None, target_models=[], network_type='Q', folder_name='Default', log=None, state_formatter=None, random_state=None,sess=None, **kwargs ):
+    def __init__(self, num_states=None, num_actions=None, gamma=0.9,lr=1e-3, method ='q-network', policy_type='epsilon-greedy', epsilon = 0.1, epsilon_decay=0.995, minimum_epsilon=0.1,heat=0.1, heat_decay=0.995, minimum_heat=0.1,
+                 transition_model=None, immediate_rewards=None, value_function=None, function_type=0, policy=None, init_Q_matrix=None, q_model=None, v_model=None, target_models=[], tau=1e-3, actor_model=None, critic_model=None, network_type='Q', folder_name='Default', log=None, state_formatter=None, random_state=None,sess=None, **kwargs ):
         """
-        Initializer for MDP agent
+        Initializer for MDP agents
 
         Parameters
         ----------
@@ -33,8 +31,11 @@ class MDP:
         lr:                float - learning rate
         method:            string - method used to determine policy (Case insensitive). Options ['vi', 'pi', 'q-table', 'q-network', 'policy-network']
         epsilon:           float - epsilon used in epsilon-greedy policy
-        epsilon-decay:     float - epsilon is discounted by this amount after each episode
-        minimum_epsilon:   smallest value epsilon is allowed to take
+        epsilon_decay:     float - epsilon is discounted by this amount after each episode
+        minimum_epsilon:   float - smallest value epsilon is allowed to take
+        heat:              float - Tau used in blotzman/ softmax policy
+        heat_decay:        float - Tau is discounted by this amount after each episode
+        minimum_heat:      float - smallest value Tau is allowed to take
         transition_model:  f: int -> int [state_dim, state_dim] - function that returns float [state_dim, state_dim] (transition probability from each state to another state) when given action
         immediate_rewards: f: int x int -> float - function that returns float (reward) when given state index and action index
         value_funtion:     f: int -> float - function that returns value of state when given state index
@@ -43,10 +44,14 @@ class MDP:
         init_Q_matrix:     float[state_dim, num_actions] - initial Q matrix
         q-model:           keras neural-network -  approximates the Q matrix
         v-model:           keras neural-network -  approximates the V function
+        target_models:     list of keras neural-network(s)- used to update networks more slowly
+        tau:               float - learning rate used in updating target networks
         network_type:      String - Type of neural-network (Case insensitive). Options ['Q', 'V']
         log:               DataFrame - Dataframe used to store episode info
-        folder:            String- name of the folder to store data saved from agent
+        folder:            String- name of the folder to store data saved from agents
         state_formatter:   Function that formats states
+        random_state:      Random state used for all random processes
+        sess:              Tensorflow session
         **kwargs:          Arguments passed to _build_NN on how to build the neural-network
         """
         self.num_states = num_states
@@ -59,10 +64,13 @@ class MDP:
         self.policy_type = policy_type.lower()
         self.Q_matrix = init_Q_matrix
         self.epsilon = epsilon
+        self.heat=heat
         self.minimum_epsilon = minimum_epsilon
+        self.minimum_heat = minimum_heat
         self.gamma = gamma
         self.lr = lr
         self.epsilon_decay = epsilon_decay
+        self.heat_decay = heat_decay
         self.actor_model=actor_model
         self.critic_model = critic_model
         self.target_models = target_models
@@ -84,9 +92,9 @@ class MDP:
         f=lambda x:x
         self.state_formatter = f if state_formatter is None else state_formatter
         self.random_state = np.random if random_state is None else random_state
-        self.toolkit = network_toolkit(sess=sess, action_dimension=num_actions, use_target_models=target_models!=[])
+        self.toolkit = network_toolkit(sess=sess, action_dimension=num_actions, use_target_models=target_models!=[], tau=tau)
 
-    def train_offline(self, transition_model=None, immediate_returns=None, method='vi', gamma=0.9, theta=1e-10, alpha=0.8, terminal_states=[], in_place=True, initial_policy=None):
+    def train_offline(self, transition_model=None, immediate_returns=None, method='vi', gamma=0.9, theta=1e-10, alpha=0.8, terminal_states=[], in_place=True, initial_policy=None, episodes=None, iterations=0, policy_learning_algorithm='Q-Learning'):
         method = method.strip().lower()
         if method in ['vi', 'pi' ] and (transition_model is None or immediate_returns is None):
             raise Exception(
@@ -105,6 +113,7 @@ class MDP:
             self.function_type = 1
             self.alpha = alpha
             self.gamma = gamma
+            self.Q_matrix = self.q_learning_offline(self.Q_matrix, episodes, self.gamma, self.alpha, iterations, self.state_formatter, self.policy_type, policy_learning_algorithm, self.epsilon, self.epsilon_decay, self.minimum_epsilon, self.heat, self.heat_decay, self.minimum_heat, self.random_state)
 
     def q_matrix_update(self, state, action, reward, next_state):
         self.Q_matrix[state][action] += self.lr * (reward + self.gamma * max(self.Q_matrix[next_state]) - self.Q_matrix[state][action])
@@ -144,15 +153,6 @@ class MDP:
         self.model = model
         return model
 
-    def get_state_index(self, full_state):
-        position, orientation, readings = full_state[0:self.num_states], full_state[self.num_states:self.num_states+4], full_state[self.num_states+4::]
-        dic = dict(enumerate(product(range(len(position)), range(4), range(8))))
-        dic = dict(zip(dic.values(), dic.keys()))
-        convert_readings = lambda x: x[0]*(2**2) + x[1]*2 + x[0]
-        position = np.argmax(position)
-        orientation = np.argmax(orientation)
-        readings = convert_readings(readings)
-        return dic[(position, orientation, int(readings))]
 
     def make_decision(self, state):
         state = self.state_formatter(state)
@@ -172,7 +172,7 @@ class MDP:
                     q_values = np.array(self.model.predict(state)).flatten()
 
             elif self.method == 'q-table':
-                q_values = self.Q_matrix[self.get_state_index(state)]
+                q_values = self.Q_matrix[state]
 
             elif self.method == 'actor-critic':
                 if self.target_models is not []:
@@ -193,7 +193,7 @@ class MDP:
                 p = tmp / np.sum(tmp)
                 
             elif self.method == 'q-table':
-                tmp = np.exp(self.Q_matrix[self.get_state_index(state)])
+                tmp = np.exp(self.Q_matrix[self.state_formatter(state)])
                 p = tmp/np.sum(tmp)
             elif self.method == 'actor-critic':
                 if self.target_models is not []:
@@ -417,6 +417,28 @@ class MDP:
                 break
 
         return values, policy
+    @staticmethod
+    def q_learning_offline(q_table, episodes,gamma, lr, iterations, state_index_func, policy, policy_learning_algorithm,epsilon, epsilon_decay, epsilon_minimum, heat, heat_decay, heat_minimum, random_state):
+        for _, frame in episodes.sample(frac=iterations, random_state=random_state).iterrows():
+            state, action, reward, next_state = frame.iloc[:, 0], frame.iloc[:, 1], frame.iloc[:, 2], frame.iloc[:, 3]
+            state_index = (state)
+            next_state_index = state_index_func(next_state)
+            future_q_values = q_table[next_state_index]
+            if policy_learning_algorithm == 'Q-Learning':
+                target = gamma*np.max(future_q_values)
+            elif policy_learning_algorithm == 'SARSA':
+                if policy=='softmax':
+                    p = np.exp(future_q_values)/sum(np.exp(future_q_values))
+                    target = gamma*np.dot(future_q_values, p)
+                    heat = min(heat_minimum, heat*heat_decay)
+                elif policy == 'epsilon-greedy':
+                    if random_state.rand()< epsilon:
+                        target = gamma*random_state.choice(future_q_values)
+                    else:
+                        target = gamma*np.max(future_q_values)
+                    epsilon = min(epsilon_minimum, epsilon*epsilon_decay)
+            q_table[state_index, action] += lr*(reward + target - q_table[state_index, action])
+        return q_table
 
 if __name__ == '__main__':
     pass

@@ -112,6 +112,6 @@ model = NN_model()
 update, r_holder = get_update_operation(model)
 policy_batch_update(model, update, r_holder, X, R, 5, 100)
 
-from agent.MarkovDecisionProcess import MDP
+from agents.MarkovDecisionProcess import MDP
 
 MDP.evaluate_maze_model(model=model, lookback=0, policy_type='softmax', method='policy-network')
