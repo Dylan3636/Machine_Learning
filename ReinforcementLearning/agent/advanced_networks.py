@@ -42,7 +42,7 @@ class network_toolkit:
     # Policy networks
     def get_policy_update_operation(self, policy_network):
         policy = policy_network.output
-        R = tf.placeholder('float') # Return holder
+        R = tf.placeholder('float')# Return holder
         loss = tf.nn.log_softmax(policy*R)
         operation = tf.train.AdamOptimizer(self.LR).minimize(loss=loss) # update operation
         return operation, R
@@ -94,10 +94,14 @@ class network_toolkit:
         """
         gradient_op = self.critic_gradient_op
         critic_inputs = critic_model.inputs
-        d = {}
+        d = dict()
         for i, ci in enumerate(critic_inputs):
-            d[ci] = inputs[i]
-        return self.SESSION.run([gradient_op],feed_dict=d)
+            try:
+                d[ci] = np.squeeze(inputs[i], axis=1)
+            except:
+                d[ci] = inputs[i]
+        #print(d)
+        return self.SESSION.run(gradient_op, feed_dict=d)
 
     # Target networks
     def update_target_models(self, model, target_model):
@@ -179,7 +183,7 @@ class network_toolkit:
             critic_model.train_on_batch(batch_states, np.array(targets))
             gradients = self.get_critic_gradients(critic_model, batch_states)
             gradients = np.squeeze(gradients)
-            gradients = np.reshape(gradients, (-1, self.ACTION_DIM))
+            gradients = np.reshape(gradients, (batch_size, self.ACTION_DIM))
 
             batch_states=self.batch_state_formatter(states)
             d = dict(zip(actor_model.inputs, batch_states))

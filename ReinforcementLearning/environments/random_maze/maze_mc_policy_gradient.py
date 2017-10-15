@@ -5,8 +5,9 @@ Created on Sun Sep 17 01:57:24 2017
 @author: dylan
 """
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 
 def clean_state(state):
     tmp = state.split()[1::]
@@ -29,7 +30,7 @@ def sum_rewards(episodes):
     return episodes
  
 # Preprocessing
-data = pd.read_csv('Datasets\log_data_episode_30000.csv')
+data = pd.read_csv('datasets\log_data_episode_30000.csv')
 tmp = data['Current State']
 data['Current State'] = data['Reward']
 dic = {100: 1, -10: -0.2, -1: -0.1 }
@@ -44,7 +45,6 @@ R = data['Total Return'].values
 # Neural Network imports
 from keras.models import Sequential
 from keras.layers import Dense
-from keras.layers import Dropout
 from keras.optimizers import Adam
 import tensorflow as tf
 from keras import backend as K
@@ -112,6 +112,6 @@ model = NN_model()
 update, r_holder = get_update_operation(model)
 policy_batch_update(model, update, r_holder, X, R, 5, 100)
 
-from MarkovDecisionProcess import MDP
+from agent.MarkovDecisionProcess import MDP
 
 MDP.evaluate_maze_model(model=model, lookback=0, policy_type='softmax', method='policy-network')

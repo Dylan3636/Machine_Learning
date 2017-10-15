@@ -1,6 +1,7 @@
-from tools.Map import Map
 import matplotlib.pyplot as plt
 import numpy as np
+
+from environments.random_maze.Map import Map
 
 MOVEMENTS = ['LEFT_TURN', 'FORWARD', 'RIGHT_TURN']
 CARDINALS = ['N', 'E', 'W', 'S']
@@ -56,7 +57,7 @@ class random_maze:
                 reward = 1
                 done = 1
                 success = 1
-            elif self.counter == 3*self.maze.num_states:
+            elif self.counter == 2*self.maze.num_states:
                 reward = -1
                 done = 1
                 success = 0
@@ -109,7 +110,7 @@ class random_maze:
 
     def render(self, debug_info =''):
         save_title = 'move_{}'.format(self.counter)
-        self.maze.show(actual_state=np.argmax(self.prev_position), orientation=np.argmax(self.prev_orientation), delay=0.5,
+        self.maze.show(actual_state=np.argmax(self.prev_position), orientation=np.argmax(self.prev_orientation), delay=0.25,
                  title='Current Score: {}\n Last Action Taken: {}\n Move: {}'.format(
                      self.current_return, self.prev_action, self.counter) + '\n {}'.format(debug_info) if self.debug else ''
                  , show=1, save=self.save_data,

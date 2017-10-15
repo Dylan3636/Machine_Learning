@@ -1,9 +1,11 @@
-import sys
 import os
+import sys
+
 import imageio
-sys.path.insert(0, (('\\User\dylan\Documents\Github\KaSeDy\pybot')))
+
+sys.path.append(os.path.abspath('../../KaSeDy/pybot'))
 from StateEstimation.BayesFilter import DiscreteBayesFilter
-from tools.Map import Map
+from environments.random_maze.Map import Map
 
 from keras.models import Sequential
 from keras.layers import Dense
@@ -434,7 +436,6 @@ def vnn_test():
         visualize = iteration in tmp
 
     pomdp.model.save('vnn_{}_states_model_{}.h5'.format(num_states, model_num))
-
 
 def QRN_test():
     num_colours = 2

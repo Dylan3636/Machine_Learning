@@ -7,6 +7,7 @@ Created on Tue Sep 26 23:34:07 2017
 
 #setting seed
 import os
+
 os.environ['PYTHONHASHSEED'] = '0'
 import numpy as np
 SEED = 5  # 15,485,863
@@ -17,7 +18,7 @@ RANDOM_STATE = np.random.RandomState(seed=SEED)
 import pandas as pd
 
 #Initialize constants
-LENGTH_OF_MAZE = 3
+LENGTH_OF_MAZE = 9
 NUM_COLOURS = 1
 ACTION_DIM = 3
 ORIENTATION_DIM = 4
@@ -27,14 +28,14 @@ POLICY = 'softmax'
 POLICY_LEARNING_ALGO = 'Q-learning'
 TARGET_MODEL = 1
 VANILLA=0
-TRAIN = 0
+TRAIN = 1
 BATCH_SIZE = 5
-ITERATIONS = 40000 # Best for 3 40000/42000
+ITERATIONS = 0 # Best for 3 40000/42000
 TAU = 1e-3
 LR = 1e-3
 BETA = 1e-3
-NUM_STEPS = 50
-NUM_EPISODES = 200
+NUM_STEPS =400
+NUM_EPISODES = 50000
 
 LOAD_MODEL = 0
 DEBUG = 0
@@ -196,7 +197,7 @@ def get_actor_update_operation(actor_model):
 
     critic_gradients = tf.placeholder('float', shape=[None, ACTION_DIM])
     loss = -tf.nn.log_softmax(policy)*critic_gradients - BETA*entropy(policy)
-    gradients= tf.gradients(ys=loss, xs=weights)
+    gradients = tf.gradients(ys=loss, xs=weights)
     grads = zip(gradients, weights)
     operation = tf.train.AdamOptimizer(LR).apply_gradients(grads)
 
@@ -354,19 +355,19 @@ else:
     sess.run(tf.global_variables_initializer())
     train_actor_critic_model(sess, [actor_model, critic_model, target_actor_model, target_critic_model], data, 0.75, [action_gradient_holder,update_op , gradient_op], ITERATIONS, BATCH_SIZE, VANILLA)
 
-
-from MarkovDecisionProcess import MDP
-mdp = MDP(LENGTH_OF_MAZE ** 2, ACTION_DIM, state_formatter=to_vanilla_state_formatter if VANILLA else state_formatter, method='actor-critic', policy_type=POLICY, actor_model=target_actor_model, critic_model=target_critic_model, target_models=[actor_model, critic_model],sess=sess, random_state=RANDOM_STATE)
+from agent.MarkovDecisionProcess import MDP
+import environments.environment_tools as et
+mdp = MDP(LENGTH_OF_MAZE ** 2, ACTION_DIM, state_formatter=to_vanilla_state_formatter if VANILLA else state_formatter, method='actor-critic', policy_type=POLICY, actor_model=actor_model, critic_model=critic_model, target_models=[target_actor_model, target_critic_model],sess=sess, random_state=RANDOM_STATE)
 mdp.toolkit.set_formatters(state_formatter=state_formatter, batch_state_formatter=batch_state_formatter)
 mdp.toolkit.set_actor_update_op(actor_update_op=update_op, critic_gradient_holder=action_gradient_holder)
 mdp.toolkit.set_critic_gradient_operation(critic_gradient_op=gradient_op)
 
-from random_maze_environment import random_maze
-env = random_maze(LENGTH_OF_MAZE, NUM_COLOURS, randomize_maze=1, randomize_state=0, random_state=RANDOM_STATE)
-mdp.evaluate_model_in_environment(env, NUM_EPISODES, NUM_STEPS, show_env=DISPLAY, train=TRAIN)
+from environments.random_maze.random_maze_environment import random_maze
+env = random_maze(LENGTH_OF_MAZE, NUM_COLOURS, randomize_maze=1, randomize_state=1, random_state=RANDOM_STATE)
+et.evaluate_model_in_environment(env, NUM_EPISODES, NUM_STEPS, show_env=list(range(0,NUM_EPISODES,100)), train=TRAIN)
 
 # Saving models
-mdp.actor_model.save('actor_model_{}.h5'.format(ITERATIONS))
-mdp.critic_model.save('critic_model_{}.h5'.format(ITERATIONS))
+mdp.actor_model.save('actor_model_{}_maze_length_{}.h5'.format(ITERATIONS, LENGTH_OF_MAZE))
+mdp.critic_model.save('critic_model_{}_maze_length_{}.h5'.format(ITERATIONS, LENGTH_OF_MAZE))
 
 #MDP.evaluate_maze_model(model=actor_model, policy_type=POLICY, method='policy-network', complex_input=0,state_formatter=vanilla_state_formatter )

@@ -1,10 +1,13 @@
+import os
+import sys
+
 import gym
-import numpy as np
 import matplotlib.pyplot as plt
-import os, sys
+import numpy as np
+
 sys.path.append(os.path.abspath('../../../KaSeDy/pybot'))
 sys.path.insert(0, os.path.abspath('../'))
-from MarkovDecisionProcess import MDP
+from agent.MarkovDecisionProcess import MDP
 from sklearn.preprocessing import MinMaxScaler
 import time
 import keras.backend as K
@@ -15,7 +18,6 @@ from keras.layers import Dense
 from keras.layers import Input
 from keras.layers import Lambda
 from keras.layers import concatenate
-from keras.layers import Dropout
 from keras.optimizers import Adam
 
 plt.ion()
