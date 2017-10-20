@@ -103,12 +103,14 @@ def get_state_index(full_state):
     :param full_state: list of maze environment observations
     :return state index:
     """
+    print(full_state)
     position, orientation, readings = full_state
     d = dict(enumerate(product(range(STATE_DIM-ORIENTATION_DIM), range(ORIENTATION_DIM), range(SENSOR_DIM))))
     d = dict(zip(d.values(), d.keys()))
     position = np.argmax(position)
     orientation = np.argmax(orientation)
     readings = np.argmax(readings)
+    print(d)
     return d[(position, orientation, readings)]
 
 

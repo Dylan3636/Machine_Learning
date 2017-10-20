@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+## -*- coding: utf-8 -*-
 """
 Created on Tue Sep 26 23:34:07 2017
 
@@ -9,6 +9,7 @@ Created on Tue Sep 26 23:34:07 2017
 import os
 import sys
 sys.path.append(os.path.abspath('..//..//'))
+print(sys.path)
 os.environ['PYTHONHASHSEED'] = '0'
 import numpy as np
 SEED = 5  # 15,485,863
@@ -19,7 +20,7 @@ RANDOM_STATE = np.random.RandomState(seed=SEED)
 import pandas as pd
 
 #Initialize constants
-LENGTH_OF_MAZE = 9
+LENGTH_OF_MAZE = 3
 NUM_COLOURS = 1
 ACTION_DIM = 3
 ORIENTATION_DIM = 4
@@ -31,7 +32,7 @@ TARGET_MODEL = 1
 VANILLA=0
 TRAIN = 1
 BATCH_SIZE = 5
-ITERATIONS = 0 # Best for 3 40000/42000
+ITERATIONS = 30000 # Best for 3 40000/42000
 TAU = 1e-3
 LR = 1e-3
 BETA = 1e-3
