@@ -24,7 +24,7 @@ import pandas as pd
 
 # Initialize constants
 # Maze parameters
-LENGTH_OF_MAZE = 9
+LENGTH_OF_MAZE = 3
 NUM_COLOURS = 1
 ACTION_DIM = 3
 ORIENTATION_DIM = 4
@@ -36,7 +36,7 @@ GAMMA = 0.9
 LR = 1e-3
 ITERATIONS = 0
 POLICY = 'softmax'
-HEAT=0.2
+HEAT=1.0
 HEAT_DECAY = 1-1e-3
 HEAT_MIN = 0.1
 EPSILON = 0.4
@@ -71,7 +71,7 @@ def clean_state(state):
 
 
 def reading_encoder(reading):
-    if len(reading)<8:
+    if len(reading)==3:
         one_hot = np.zeros(SENSOR_DIM)
         index = int(reading[0] + 2 * reading[1] + 4 * reading[2])
         one_hot[index] = 1
@@ -103,14 +103,13 @@ def get_state_index(full_state):
     :param full_state: list of maze environment observations
     :return state index:
     """
-    print(full_state)
     position, orientation, readings = full_state
+    readings = reading_encoder(readings)
     d = dict(enumerate(product(range(STATE_DIM-ORIENTATION_DIM), range(ORIENTATION_DIM), range(SENSOR_DIM))))
     d = dict(zip(d.values(), d.keys()))
     position = np.argmax(position)
     orientation = np.argmax(orientation)
     readings = np.argmax(readings)
-    print(d)
     return d[(position, orientation, readings)]
 
 
@@ -146,13 +145,13 @@ def train_q_table_offline(q_table, episodes, iterations):
 if LOAD_MODEL:
     q_table = np.matrix(np.load('q-table.txt'))
 else:
-    N = (STATE_DIM-SENSOR_DIM)*(SENSOR_DIM)*(ORIENTATION_DIM)
-    q_table=np.matrix(np.zeros([N, ACTION_DIM]))
+    N = (STATE_DIM-ORIENTATION_DIM)*(ORIENTATION_DIM)*(SENSOR_DIM)
+    q_table = np.matrix(np.zeros([N, ACTION_DIM]))
     train_q_table_offline(q_table=q_table, episodes=data, iterations=ITERATIONS)
 from agents.MarkovDecisionProcess import MDP
 from environments.tools import evaluate_model_in_environment
 
-mdp = MDP(LENGTH_OF_MAZE ** 2, ACTION_DIM, state_formatter=get_state_index,init_Q_matrix=q_table, random_state=RANDOM_STATE, epsilon=EPSILON, epsilon_decay=EPSILON_DECAY, minimum_epsilon=EPSILON_MIN)
+mdp = MDP(LENGTH_OF_MAZE ** 2, ACTION_DIM, state_formatter=get_state_index, init_Q_matrix=q_table, random_state=RANDOM_STATE, epsilon=EPSILON, epsilon_decay=EPSILON_DECAY, minimum_epsilon=EPSILON_MIN, heat=HEAT, heat_decay=HEAT_DECAY, minimum_heat=HEAT_MIN, method='q-table', policy_type=POLICY)
 
 from environments.random_maze.random_maze_environment import random_maze
 
