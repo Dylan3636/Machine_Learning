@@ -108,7 +108,7 @@ class MDP:
             self.function_type = 0
             self.value_function, self.policy = self.policy_iteration(initial_policy, transition_model, immediate_returns, gamma, theta, terminal_states, in_place)
 
-        if method == 'q_table':
+        if method == 'q-table':
             self.num_states, self.num_actions = np.size(self.Q_matrix, 0), np.size(self.Q_matrix, 1)
             self.function_type = 1
             self.alpha = alpha
@@ -193,13 +193,14 @@ class MDP:
                 p = tmp / np.sum(tmp)
                 
             elif self.method == 'q-table':
-                tmp = np.exp(self.Q_matrix[self.state_formatter(state)])
-                p = tmp/np.sum(tmp)
+                tmp = np.exp(np.array(self.Q_matrix[state]))
+                p = (tmp/np.sum(tmp)).flatten()
             elif self.method == 'actor-critic':
                 if self.target_models is not []:
                     p = np.array(self.target_models[0].predict(state)).flatten()
                 else:
                     p = np.array(self.actor_model.predict(state)).flatten()
+            print(p)
             return self.random_state.choice(range(len(p)), p=p)
 
 
@@ -222,8 +223,11 @@ class MDP:
         if self.random_state.random_sample() < dropout:
             return
 
-        if self.method == 'q_table':
-            self.q_matrix_update(self.get_state_index(state), action, reward, self.get_state_index(next_state))
+        if self.method == 'q-table':
+            if self.random_state.random_sample() < replay:
+                self.train_offline(episodes=self.log, method=self.method)
+            else:
+                self.q_matrix_update(self.state_formatter(state), action, reward, self.state_formatter(next_state))
 
         elif self.method == 'q-network':
             
