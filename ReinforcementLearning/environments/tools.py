@@ -44,7 +44,7 @@ def evaluate_model_in_environment(agent, env, num_episodes, num_timesteps, show_
             action = agent.make_decision(prev_observation)
             observation, reward, done, _ = env.step(action)
             if train:
-                agent.update(state=prev_observation, action=action, reward=reward, next_state=observation, done=done)
+                agent.update(state=prev_observation, action=action, reward=reward, next_state=observation, done=done, log=False, replay=False)
             current_return += reward
             prev_observation = observation.copy()
 

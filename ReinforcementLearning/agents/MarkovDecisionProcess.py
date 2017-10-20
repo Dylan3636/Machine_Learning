@@ -117,6 +117,10 @@ class MDP:
 
     def q_matrix_update(self, state, action, reward, next_state):
         self.Q_matrix[state][action] += self.lr * (reward + self.gamma * max(self.Q_matrix[next_state]) - self.Q_matrix[state][action])
+        self.heat = min(self.minimum_heat, self.heat*self.heat_decay)
+        self.epsilon = min(self.minimum_epsilon, self.epsilon*self.epsilon_decay)
+
+
 
     def _build_NN(self, num_inputs=None, num_hidden_neurons=10, num_hidden_layers=1, num_output_neurons=4, dropout_rate=0.2, lr=0.001, recurrent_layer=0, num_rnn_units=128, lookback=0, convolutional_layer=0, filters=16, kernel_size=2, l2_reg=0.7):
         num_inputs = self.num_states if num_inputs is None else num_inputs
@@ -225,9 +229,12 @@ class MDP:
 
         if self.method == 'q-table':
             if self.random_state.random_sample() < replay:
-                self.train_offline(episodes=self.log, method=self.method)
+                episodes = self.buffer if len(self.log)==0 else self.log
+                for _, frame in episodes.sample(frac=batch_size, random_state=self.random_state).iterrows():
+                    state, action, next_state,reward = frame.iloc[0], frame.iloc[1], frame.iloc[2], frame.iloc[3]
+                    self.q_matrix_update(self.state_formatter(state), action, reward, self.state_formatter(next_state))
             else:
-                self.q_matrix_update(self.state_formatter(state), action, reward, self.state_formatter(next_state))
+                self.q_matrix_update(state, action, reward, next_state)
 
         elif self.method == 'q-network':
             
