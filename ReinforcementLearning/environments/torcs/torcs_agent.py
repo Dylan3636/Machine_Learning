@@ -431,9 +431,9 @@ env.end()
 # mdp = MDP(LENGTH_OF_MAZE ** 2, ACTION_DIM, state_formatter=to_vanilla_state_formatter if VANILLA else state_formatter,
 #           method='actor-critic', policy_type=POLICY, actor_model=target_actor_model, critic_model=target_critic_model,
 #           target_models=[actor_model, critic_model], sess=sess, random_state=RANDOM_STATE)
-# mdp.toolkit.set_formatters(state_formatter=state_formatter, batch_state_formatter=batch_state_formatter)
-# mdp.toolkit.set_actor_update_op(actor_update_op=update_op, critic_gradient_holder=action_gradient_holder)
-# mdp.toolkit.set_critic_gradient_operation(critic_gradient_op=gradient_op)
+# mdp.ac_toolkit.set_formatters(state_formatter=state_formatter, batch_state_formatter=batch_state_formatter)
+# mdp.ac_toolkit.set_actor_update_op(actor_update_op=update_op, critic_gradient_holder=action_gradient_holder)
+# mdp.ac_toolkit.set_critic_gradient_operation(critic_gradient_op=gradient_op)
 #
 # from random_maze_environment import random_maze
 #

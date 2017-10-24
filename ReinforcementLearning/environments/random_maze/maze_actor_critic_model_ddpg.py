@@ -19,7 +19,7 @@ RANDOM_STATE = np.random.RandomState(seed=SEED)
 import pandas as pd
 
 #Initialize constants
-LENGTH_OF_MAZE = 9
+LENGTH_OF_MAZE = 3
 NUM_COLOURS = 1
 ACTION_DIM = 3
 ORIENTATION_DIM = 4
@@ -31,7 +31,7 @@ TARGET_MODEL = 1
 VANILLA=0
 TRAIN = 1
 BATCH_SIZE = 5
-ITERATIONS = 0 # Best for 3 40000/42000
+ITERATIONS = 0 if LENGTH_OF_MAZE == 3 else 0 # Data stored only for 3x3 maze. (Best for 3x3 maze: 40000/42000 iterations)
 TAU = 1e-3
 LR = 1e-3
 BETA = 1e-3
@@ -115,8 +115,6 @@ def to_vanilla_state_formatter(state):
 
 # Preprocessing
 data = pd.read_csv('log_data_episode_5000.csv')
-#dic = {100: 1, -10: -0.2, -1: -0.1 }
-#data['Reward'] = data['Reward'].apply(lambda x: dic[x])
 data['Previous State'] = data['Previous State'].apply(clean_state).values
 data['Current State'] = data['Current State'].apply(clean_state).values
 
@@ -358,9 +356,9 @@ else:
 from agents.MarkovDecisionProcess import MDP
 from environments.tools import evaluate_model_in_environment
 mdp = MDP(LENGTH_OF_MAZE ** 2, ACTION_DIM, state_formatter=to_vanilla_state_formatter if VANILLA else state_formatter, method='actor-critic', policy_type=POLICY, actor_model=actor_model, critic_model=critic_model, target_models=[target_actor_model, target_critic_model],sess=sess, random_state=RANDOM_STATE)
-mdp.toolkit.set_formatters(state_formatter=state_formatter, batch_state_formatter=batch_state_formatter)
-mdp.toolkit.set_actor_update_op(actor_update_op=update_op, critic_gradient_holder=action_gradient_holder)
-mdp.toolkit.set_critic_gradient_operation(critic_gradient_op=gradient_op)
+mdp.ac_toolkit.set_formatters(state_formatter=state_formatter, batch_state_formatter=batch_state_formatter)
+mdp.ac_toolkit.set_actor_update_op(actor_update_op=update_op, critic_gradient_holder=action_gradient_holder)
+mdp.ac_toolkit.set_critic_gradient_operation(critic_gradient_op=gradient_op)
 
 from environments.random_maze.random_maze_environment import random_maze
 env = random_maze(LENGTH_OF_MAZE, NUM_COLOURS, randomize_maze=1, randomize_state=1, random_state=RANDOM_STATE)

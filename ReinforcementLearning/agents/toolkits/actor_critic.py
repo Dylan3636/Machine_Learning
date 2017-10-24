@@ -11,7 +11,7 @@ RANDOM_STATE = np.random.RandomState(seed=SEED)
 import tensorflow as tf
 from keras import backend as K
 
-class network_toolkit:
+class Actor_Critic:
     """Compilation of functions used deal with Q-networks, policy-networks and actor-critic networks"""
 
     def __init__(self, sess, action_dimension, gamma=0.9, lr=1.e-3,learning_method='SARSA', policy_type='softmax', use_target_models=0, tau=1.e-3, state_formatter=lambda x, y: x, action_formatter=None, batch_state_formatter=lambda x, y: x):
@@ -39,16 +39,24 @@ class network_toolkit:
         self.action_formatter = self.action_encoder if action_formatter is None else action_formatter
         self.batch_state_formatter = batch_state_formatter
 
-    # Policy networks
-    def get_policy_update_operation(self, policy_network):
-        policy = policy_network.output
-        R = tf.placeholder('float')# Return holder
-        loss = tf.nn.log_softmax(policy*R)
-        operation = tf.train.AdamOptimizer(self.LR).minimize(loss=loss) # update operation
-        return operation, R
+    def entropy(policy):
+        return -tf.reduce_sum(policy * tf.nn.log_softmax(policy))
+
 
     # Actor-Critic networks
     def get_actor_update_operation(self, actor_model):
+        policy = actor_model.output
+        weights = actor_model.trainable_weights
+
+        critic_gradients = tf.placeholder('float', shape=[None, self.ACTION_DIM])
+        loss = -tf.nn.log_softmax(policy) * critic_gradients - self.BETA * self.entropy(policy)
+        gradients = tf.gradients(ys=loss, xs=weights)
+        grads = zip(gradients, weights)
+        operation = tf.train.AdamOptimizer(LR).apply_gradients(grads)
+
+        return operation, critic_gradients
+
+    def get_actor_update_operation_ddpg(self, actor_model):
         policy = actor_model.output
         action_gradients = tf.placeholder('float', shape = [None, self.ACTION_DIM])
 
@@ -64,17 +72,17 @@ class network_toolkit:
             self.actor_update_op=actor_update_op
             self.critic_gradient_holder = critic_gradient_holder
         else:
-            self.actor_update_op, self.critic_gradient_holder = self.get_actor_update_operation(actor_model=actor_model)
+            self.actor_update_op, self.critic_gradient_holder = self.get_actor_update_operation_ddpg(actor_model=actor_model)
 
 
-    def get_critic_gradient_operation(self, critic_model):
+    def get_critic_gradient_operation(self, critic_model, actions_index=-1):
         """
         Gradient operation used to update the actor network
         :param critic_model: critic neural-network
         :return tensorflow operation:
         """
         Q_function = critic_model.output
-        actions = critic_model.inputs[2]
+        actions = critic_model.inputs[actions_index]
         action_gradient_op = tf.gradients(Q_function, actions)
         return action_gradient_op
 
@@ -100,7 +108,6 @@ class network_toolkit:
                 d[ci] = np.squeeze(inputs[i], axis=1)
             except:
                 d[ci] = inputs[i]
-        #print(d)
         return self.SESSION.run(gradient_op, feed_dict=d)
 
     # Target networks
@@ -191,29 +198,3 @@ class network_toolkit:
             sess.run([self.actor_update_op], feed_dict=d)
 
 
-    def batch_train_policy_model(self, models, episodes, gamma, tf_holders, iterations, batch_size, vanilla_actor):
-        sess = self.SESSION
-        policy_model = models[0]
-
-        for iteration in range(iterations):
-            print('Iteration: {}'.format(iteration))
-            returns = []
-            policies = []
-
-            for _, frame in episodes.sample(batch_size).iterrows():
-                raw_state, action, R = frame['States'], frame['Actions'], frame['Returns']
-                state = self.state_formatter(raw_state, action)
-
-                if self.TARGET_MODEL:
-                    policy = models[1].predict(state, batch_size=1).flatten()
-                else:
-                    policy = policy_model.predict(state, batch_size=1).flatten()
-                policies.append(policy)
-                returns.append(R)
-
-            d = dict()
-            d[tf_holders[2]] = np.reshape(returns, (-1, len(returns)))
-            d[tf_holders[0]] = policies
-            sess.run([tf_holders[1]], feed_dict=d)
-            if self.TARGET_MODEL:
-                self.update_target_models(models[0], models[1])
