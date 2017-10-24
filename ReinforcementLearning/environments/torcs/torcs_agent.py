@@ -333,7 +333,7 @@ def update_actor_critic_model(sess, models, episodes, tf_holders, iterations, ba
         #print('targets: ', targets)
         critic_model.train_on_batch(batch_observation_formatter(previous_observations, actions), np.array(targets))
         gradients = np.squeeze(get_critic_gradients(sess, tf_holders[2], critic_model, previous_observations, np.array(actions)))
-        future_gradients = np.squeeze(get_critic_gradients(sess, tf_holders[2], critic_model, observations, np.array(actions)))
+        #future_gradients = np.squeeze(get_critic_gradients(sess, tf_holders[2], critic_model, observations, np.array(actions)))
         #gradients = np.reshape(np.array(rewards) + np.array(id_mask)*GAMMA*future_gradients-gradients, (1, ACTION_DIM))
         #print('gradients: ', gradients)
 
@@ -424,25 +424,3 @@ for episode in range(400):
         
 # shut down torcs
 env.end()
-
-
-# from MarkovDecisionProcess import MDP
-#
-# mdp = MDP(LENGTH_OF_MAZE ** 2, ACTION_DIM, state_formatter=to_vanilla_state_formatter if VANILLA else state_formatter,
-#           method='actor-critic', policy_type=POLICY, actor_model=target_actor_model, critic_model=target_critic_model,
-#           target_models=[actor_model, critic_model], sess=sess, random_state=RANDOM_STATE)
-# mdp.ac_toolkit.set_formatters(state_formatter=state_formatter, batch_state_formatter=batch_state_formatter)
-# mdp.ac_toolkit.set_actor_update_op(actor_update_op=update_op, critic_gradient_holder=action_gradient_holder)
-# mdp.ac_toolkit.set_critic_gradient_operation(critic_gradient_op=gradient_op)
-#
-# from random_maze_environment import random_maze
-#
-# env = random_maze(LENGTH_OF_MAZE, NUM_COLOURS, randomize_maze=1, randomize_state=0, random_state=RANDOM_STATE)
-# mdp.evaluate_model_in_environment(env, NUM_EPISODES, NUM_STEPS, show_env=DISPLAY, train=TRAIN)
-#
-# # Saving models
-# mdp.actor_model.save('actor_model_{}.h5'.format(ITERATIONS))
-# mdp.critic_model.save('critic_model_{}.h5'.format(ITERATIONS))
-
-# MDP.evaluate_maze_model(model=actor_model, policy_type=POLICY, method='policy-network', complex_input=0,state_formatter=vanilla_state_formatter )
-
