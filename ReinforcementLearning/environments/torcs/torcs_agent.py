@@ -2,6 +2,7 @@
 """
 Created on Tue Sep 26 23:34:07 2017
 
+credit to yanpanlau for initial implementation. (https://github.com/yanpanlau/DDPG-Keras-Torcs)
 @author: dylan
 """
 
