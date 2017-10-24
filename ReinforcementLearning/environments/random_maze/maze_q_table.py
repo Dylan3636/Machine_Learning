@@ -107,9 +107,9 @@ def get_state_index(full_state):
     readings = reading_encoder(readings)
     d = dict(enumerate(product(range(STATE_DIM-ORIENTATION_DIM), range(ORIENTATION_DIM), range(SENSOR_DIM))))
     d = dict(zip(d.values(), d.keys()))
-    position = np.argmax(position)
-    orientation = np.argmax(orientation)
-    readings = np.argmax(readings)
+    position = int(np.argmax(position))
+    orientation = int(np.argmax(orientation))
+    readings = int(np.argmax(readings))
     return d[(position, orientation, readings)]
 
 
@@ -146,7 +146,7 @@ if LOAD_MODEL:
     q_table = np.matrix(np.load('q-table.txt'))
 else:
     N = (STATE_DIM-ORIENTATION_DIM)*(ORIENTATION_DIM)*(SENSOR_DIM)
-    q_table = np.matrix(np.zeros([N, ACTION_DIM]))
+    q_table = np.zeros([N, ACTION_DIM])
     train_q_table_offline(q_table=q_table, episodes=data, iterations=ITERATIONS)
 from agents.MarkovDecisionProcess import MDP
 from environments.tools import evaluate_model_in_environment
