@@ -149,14 +149,14 @@ else:
     q_table = np.zeros([N, ACTION_DIM])
     train_q_table_offline(q_table=q_table, episodes=data, iterations=ITERATIONS)
 from agents.MarkovDecisionProcess import MDP
-from environments.tools import evaluate_model_in_environment
+from environments.tools import evaluate_agent_in_environment
 
 mdp = MDP(LENGTH_OF_MAZE ** 2, ACTION_DIM, state_formatter=get_state_index, init_Q_matrix=q_table, random_state=RANDOM_STATE, epsilon=EPSILON, epsilon_decay=EPSILON_DECAY, minimum_epsilon=EPSILON_MIN, heat=HEAT, heat_decay=HEAT_DECAY, minimum_heat=HEAT_MIN, method='q-table', policy_type=POLICY)
 
 from environments.random_maze.random_maze_environment import random_maze
 
 env = random_maze(LENGTH_OF_MAZE, NUM_COLOURS, randomize_maze=1, randomize_state=1, random_state=RANDOM_STATE)
-evaluate_model_in_environment(mdp, env, NUM_EPISODES, NUM_STEPS, show_env=list(range(0, NUM_EPISODES, 100)),
+evaluate_agent_in_environment(mdp, env, NUM_EPISODES, NUM_STEPS, show_env=list(range(0, NUM_EPISODES, 100)),
                               train=TRAIN)
 # Saving models
 np.savetxt('q-table', mdp.Q_matrix)

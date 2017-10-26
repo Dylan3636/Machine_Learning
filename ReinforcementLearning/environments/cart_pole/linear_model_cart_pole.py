@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 from agents.MarkovDecisionProcess import MDP
-from environments.tools import evaluate_model_in_environment
+from environments.tools import evaluate_agent_in_environment
 
 env_name ='CartPole-v0'
 env = gym.make(env_name)
@@ -46,4 +46,4 @@ for i in range(0, num_episodes, 50):
     visualize[i] = 1
 
 mdp = MDP(num_actions=env.action_space.n, state_formatter=state_formatter, init_weights=initial_weights,lr=5e-3, alpha=0, method='q-linear', epsilon=1.0, gamma=0.99, epsilon_decay=0.9997, minimum_epsilon=0)
-evaluate_model_in_environment(mdp, env, num_episodes, num_timesteps=400,show_env=list(visualize), train=1, reward_formatter=reward_formatter, delay=0.05)
+evaluate_agent_in_environment(mdp, env, num_episodes, num_timesteps=400, show_env=list(visualize), train=1, reward_formatter=reward_formatter, delay=0.05)

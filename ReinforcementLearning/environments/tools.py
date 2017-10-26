@@ -1,6 +1,6 @@
 import numpy as np
 from time import sleep
-def evaluate_model_in_environment(agent, env, num_episodes, num_timesteps, show_env=0, train=0, show_graph=0,reward_formatter=lambda x:x[1],delay=0,is_converged=lambda x: False,
+def evaluate_agent_in_environment(agent, env, num_episodes, num_timesteps, show_env=0, train=0, show_graph=0, reward_formatter=lambda x:x[1], delay=0, is_converged=lambda x: False,
                                   ax_env=None, ax_graph=None,
                                   verbose=1):
     """

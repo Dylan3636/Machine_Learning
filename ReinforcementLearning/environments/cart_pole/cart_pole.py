@@ -7,7 +7,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.abspath('../'))
 from agents.MarkovDecisionProcess import MDP
-from environments.tools import evaluate_model_in_environment
+from environments.tools import evaluate_agent_in_environment
 from sklearn.preprocessing import MinMaxScaler
 import time
 import keras.backend as K
@@ -97,7 +97,7 @@ visualize = np.zeros(num_episodes)
 for i in range(0, num_episodes, 50):
     visualize[i] =1
 visualize_graphs = visualize
-
+save = 0
 print('Action space: {}'.format(env.action_space))
 print('Observation space: {}'.format(env.observation_space))
 
@@ -112,53 +112,10 @@ def reward_formatter(observation):
     return reward
 
 
-evaluate_model_in_environment(mdp, env, num_episodes, num_timesteps=400, show_env=list(visualize), train=1, reward_formatter=reward_formatter, delay=0.05, is_converged=lambda x: x >= 19.5)
+evaluate_agent_in_environment(mdp, env, num_episodes, num_timesteps=400, show_env=list(visualize), train=1, reward_formatter=reward_formatter, delay=0.05, is_converged=lambda x: x >= 19.5)
 
-
-# scaler = MinMaxScaler()
-# scaler.fit([env.observation_space.high, env.observation_space.low])
-#
-# fig = plt.figure(1)
-# returns = []
-# timesteps_list=deque(maxlen=100)
-#
-# for episode in episodes:
-#     previous_observation = env.reset() # initial observation
-#     done = 0
-#     for t in timesteps:
-#         if visualize[episode]:
-#             env.render()
-#             time.sleep(0.05)
-#         action = mdp.make_decision(np.reshape(previous_observation, (-1, state_dim))) # pick action
-#         next_observation, reward, done, info = env.step(action) # take action and see results
-#         if done and t!= 199:
-#             reward = 0
-#         else:
-#             reward /= 10.0
-#         if episode > 0:
-#             mdp.update(previous_observation, action, reward, next_observation, done, replay=0.8, dropout=0, log=True,
-#                       batch_size=1, minibatch_size=1)
-#         else:
-#             mdp.update(previous_observation, action, reward, next_observation, done, dropout=1, log=True)
-#
-#         if done:
-#             print('Episode {} finished after {} timesteps.(Average timesteps: {})'.format(episode, t,
-#                                                                                           np.mean(timesteps_list)))
-#             break
-#
-#         previous_observation = next_observation
-#     returns.append(mdp.current_return)
-#     mdp.current_return=0
-#     timesteps_list.append(t)
-#
-#     if visualize_graphs[episode]:
-#         ax = fig.add_subplot(1,1,1)
-#         draw_graph(returns=returns, ax=ax)
-#
-#     if np.mean(timesteps_list) >= 195 and len(list(timesteps_list)) == 100:
-#         break
-#
-# mdp.model.save('qnn_cart_model_1.h5')
+if save:
+    mdp.model.save('qnn_cart_model_1.h5')
 
 
 
