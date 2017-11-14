@@ -19,12 +19,13 @@ RANDOM_STATE = np.random.RandomState(seed=SEED)
 import pandas as pd
 
 #Initialize constants
-LENGTH_OF_MAZE = 3
+LENGTH_OF_MAZE = 5
 NUM_COLOURS = 1
 ACTION_DIM = 3
 ORIENTATION_DIM = 4
 STATE_DIM = LENGTH_OF_MAZE**2 + ORIENTATION_DIM
 SENSOR_DIM = 8
+STOCHASTIC = 1
 POLICY = 'softmax'
 POLICY_LEARNING_ALGO = 'Q-learning'
 TARGET_MODEL = 1
@@ -34,6 +35,9 @@ BATCH_SIZE = 5
 ITERATIONS = 0 if LENGTH_OF_MAZE == 3 else 0 # Data stored only for 3x3 maze. (Best for 3x3 maze: 40000/42000 iterations)
 TAU = 1e-3
 LR = 1e-3
+HEAT = 0.2
+HEAT_DECAY = 0.99985
+MINIMUM_HEAT = 0.01
 BETA = 1e-3
 NUM_STEPS =400
 NUM_EPISODES = 50000
@@ -98,11 +102,22 @@ def state_formatter(full_state, action=None):
 
 
 def batch_state_formatter(full_states, actions=None):
-    actions = np.repeat(None, len(full_states)) if actions is None else actions
-    formatted_states = []
-    for i, state in enumerate(full_states):
-        formatted_states.append(state_formatter(state, actions[i]))
-    return formatted_states[0]
+    states = []
+    readings = []
+    if actions is None:
+        for i, state in enumerate(full_states):
+            state, reading = (state_formatter(state))
+            states.append(state)
+            readings.append(reading)
+        return [np.reshape(states, [-1, STATE_DIM]), np.reshape(readings, [-1, SENSOR_DIM])]
+    else:
+        action_list = []
+        for i, state in enumerate(full_states):
+            state, reading, action = (state_formatter(state, actions[i]))
+            states.append(state)
+            readings.append(reading)
+            action_list.append(action)
+        return [np.reshape(states, [-1, STATE_DIM]), np.reshape(readings, [-1, SENSOR_DIM]), np.reshape(action_list, [-1, ACTION_DIM])]
 
 
 def vanilla_state_formatter(state):
@@ -268,28 +283,30 @@ def train_actor_critic_model(sess, models, episodes, gamma, tf_holders, iteratio
             if reward == 1:
                 target = reward
             else:
-                # Using SARSA
-                if POLICY_LEARNING_ALGO == 'SARSA':
+                if not STOCHASTIC:
+                    # Using SARSA
+                    if POLICY_LEARNING_ALGO == 'SARSA':
 
-                    # Epsilon-Greedy Policy
-                    if POLICY == 'epsilon-greedy':
+                        # Epsilon-Greedy Policy
+                        if POLICY == 'epsilon-greedy':
+                            indx = np.argmax(next_policy)
+                            if RANDOM_STATE.rand() < 0.5:
+                                next_action = action_encoder(RANDOM_STATE.choice(ACTION_DIM))
+                            else:
+                                next_action = action_encoder(indx)
+
+                        # Softmax policy
+                        elif POLICY == 'softmax':
+                            if not vanilla_actor:
+                                next_action = action_encoder(RANDOM_STATE.choice(ACTION_DIM, p=next_policy))
+                            else:
+                                next_action = action_encoder(RANDOM_STATE.choice(ACTION_DIM, p=next_policy))
+
+                    elif POLICY_LEARNING_ALGO == 'Q-learning':
                         indx = np.argmax(next_policy)
-                        if RANDOM_STATE.rand() < 0.5:
-                            next_action = action_encoder(RANDOM_STATE.choice(ACTION_DIM))
-                        else:
-                            next_action = action_encoder(indx)
-
-                    # Softmax policy
-                    elif POLICY == 'softmax':
-                        if not vanilla_actor:
-                            next_action = action_encoder(RANDOM_STATE.choice(ACTION_DIM, p=next_policy))
-                        else:
-                            next_action = action_encoder(RANDOM_STATE.choice(ACTION_DIM, p=next_policy))
-
-                elif POLICY_LEARNING_ALGO == 'Q-learning':
-                    indx = np.argmax(next_policy)
-                    next_action = action_encoder(indx)
-
+                        next_action = action_encoder(indx)
+                else:
+                    next_action = next_policy
                 next_action = np.reshape(next_action, (1, ACTION_DIM))
                 if TARGET_MODEL:
                     future_q = models[3].predict([next_state, next_reading, next_action], batch_size=1).flatten()
@@ -304,7 +321,8 @@ def train_actor_critic_model(sess, models, episodes, gamma, tf_holders, iteratio
             readings.append(reading)
 
         critic_model.train_on_batch([np.array(states).squeeze(axis=1), np.array(readings).squeeze(axis=1), np.array(actions).squeeze(axis=1)], np.array(targets))
-        gradients = get_critic_gradients(sess, tf_holders[2], critic_model, np.array(states).squeeze(axis=1), np.array(readings).squeeze(axis=1), np.array(actions).squeeze(axis=1))
+        actions_for_grad = models[3].predict_on_batch([np.array(states).squeeze(axis=1), np.array(readings).squeeze(axis=1)])
+        gradients = get_critic_gradients(sess, tf_holders[2], critic_model, np.array(states).squeeze(axis=1), np.array(readings).squeeze(axis=1), actions_for_grad)
         gradients = np.squeeze(gradients)
         gradients = np.reshape(gradients, (-1, ACTION_DIM))
 
@@ -349,13 +367,15 @@ else:
         target_critic_model=None
 
     update_op, action_gradient_holder = get_actor_update_operation(actor_model)
-    gradient_op = get_gradient_operation(critic_model)
+    gradient_op = get_gradient_operation(target_critic_model)
     sess.run(tf.global_variables_initializer())
     train_actor_critic_model(sess, [actor_model, critic_model, target_actor_model, target_critic_model], data, 0.75, [action_gradient_holder,update_op , gradient_op], ITERATIONS, BATCH_SIZE, VANILLA)
 
 from agents.MarkovDecisionProcess import MDP
 from environments.tools import evaluate_agent_in_environment
-mdp = MDP(LENGTH_OF_MAZE ** 2, ACTION_DIM, state_formatter=to_vanilla_state_formatter if VANILLA else state_formatter, method='actor-critic', policy_type=POLICY, actor_model=actor_model, critic_model=critic_model, target_models=[target_actor_model, target_critic_model],sess=sess, random_state=RANDOM_STATE)
+mdp = MDP(LENGTH_OF_MAZE ** 2, ACTION_DIM, state_formatter=to_vanilla_state_formatter if VANILLA else state_formatter, method='actor-critic',
+          policy_type=POLICY, actor_model=actor_model, critic_model=critic_model, target_models=[target_actor_model, target_critic_model], sess=sess,
+          random_state=RANDOM_STATE, heat=HEAT, heat_decay=HEAT_DECAY, minimum_heat=MINIMUM_HEAT, stochastic=1)
 mdp.ac_toolkit.set_formatters(state_formatter=state_formatter, batch_state_formatter=batch_state_formatter)
 mdp.ac_toolkit.set_actor_update_op(actor_update_op=update_op, critic_gradient_holder=action_gradient_holder)
 mdp.ac_toolkit.set_critic_gradient_operation(critic_gradient_op=gradient_op)

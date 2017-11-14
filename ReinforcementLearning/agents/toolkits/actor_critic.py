@@ -14,15 +14,17 @@ from keras import backend as K
 class Actor_Critic:
     """Compilation of functions used deal with Q-networks, policy-networks and actor-critic networks"""
 
-    def __init__(self, sess, action_dimension, gamma=0.9, lr=1.e-3,learning_method='SARSA', policy_type='softmax', use_target_models=0, tau=1.e-3, state_formatter=lambda x, y: x, action_formatter=None, batch_state_formatter=lambda x, y: x):
+    def __init__(self, sess, action_dimension, gamma=0.9, lr=1.e-3,learning_method='SARSA', policy_type='softmax', use_target_models=0, tau=1.e-3, beta = 1e-3, state_formatter=lambda x, y: x, action_formatter=None, batch_state_formatter=lambda x, y: x, stochastic=1):
         self.SESSION = sess
         self.ACTION_DIM = action_dimension
         self.LR = lr
         self.LEARNING_METHOD = learning_method.upper()
+        self.STOCHASTIC = stochastic
         self.POLICY = policy_type.lower()
         self.TARGET_MODEL = use_target_models
         self.TAU = tau
         self.GAMMA = gamma
+        self.BETA = beta
         self.state_formatter = state_formatter
         self.action_formatter = self.action_encoder if action_formatter is None else action_formatter
         self.batch_state_formatter = batch_state_formatter
@@ -141,12 +143,12 @@ class Actor_Critic:
                 frame = frame.values
                 raw_state, action, raw_next_state, reward = frame[0], frame[1], frame[2], frame[3]
 
-                state = self.state_formatter(raw_state, action)
+                state_w_action = self.state_formatter(raw_state, action)
 
                 if self.TARGET_MODEL:
-                    q = models[3].predict(state, batch_size=1).flatten()
+                    q = models[3].predict(state_w_action, batch_size=1).flatten()
                 else:
-                    q = critic_model.predict(state, batch_size=1).flatten()
+                    q = critic_model.predict(state_w_action, batch_size=1).flatten()
                 next_state = self.state_formatter(raw_next_state)
                 if self.TARGET_MODEL:
                     next_policy = models[2].predict(next_state, batch_size=1).flatten()
@@ -156,24 +158,28 @@ class Actor_Critic:
                 if reward == 1:
                     target = reward
                 else:
-                    # Using SARSA
-                    if self.LEARNING_METHOD == 'SARSA':
+                    if not self.STOCHASTIC:
+                        # Using SARSA
+                        if self.LEARNING_METHOD == 'SARSA':
 
-                        # Epsilon-Greedy Policy
-                        if self.POLICY == 'epsilon-greedy':
+                            # Epsilon-Greedy Policy
+                            if self.POLICY == 'epsilon-greedy':
+                                indx = np.argmax(next_policy)
+                                if np.random.rand() < 0.5:
+                                    next_action = self.action_encoder(np.random.choice(self.ACTION_DIM))
+                                else:
+                                    next_action = self.action_encoder(indx)
+
+                            # Softmax policy
+                            elif self.POLICY == 'softmax':
+                                    next_action = self.action_encoder(np.random.choice(self.ACTION_DIM, p=next_policy))
+
+                        elif self.LEARNING_METHOD == 'Q-learning':
                             indx = np.argmax(next_policy)
-                            if np.random.rand() < 0.5:
-                                next_action = self.action_encoder(np.random.choice(self.ACTION_DIM))
-                            else:
-                                next_action = self.action_encoder(indx)
+                            next_action = self.action_encoder(int(indx))
 
-                        # Softmax policy
-                        elif self.POLICY == 'softmax':
-                                next_action = self.action_encoder(np.random.choice(self.ACTION_DIM, p=next_policy))
-
-                    elif self.LEARNING_METHOD == 'Q-learning':
-                        indx = np.argmax(next_policy)
-                        next_action = self.action_encoder(int(indx))
+                    else:
+                        next_action = next_policy
 
                     if self.TARGET_MODEL:
                         future_q = models[3].predict(self.state_formatter(raw_next_state, next_action), batch_size=batch_size).flatten()
@@ -185,10 +191,11 @@ class Actor_Critic:
                 deltas.append(target-q)
                 targets.append(target)
                 states.append(raw_state)
-
-            batch_states=self.batch_state_formatter(states, actions)
+            batch_states = self.batch_state_formatter(states, actions)
             critic_model.train_on_batch(batch_states, np.array(targets))
-            gradients = self.get_critic_gradients(critic_model, batch_states)
+            actions_for_grad = models[2].predict_on_batch(self.batch_state_formatter(states)).flatten()
+            batch_grad_states = self.batch_state_formatter(states, actions_for_grad)
+            gradients = self.get_critic_gradients(models[3], batch_grad_states)
             gradients = np.squeeze(gradients)
             gradients = np.reshape(gradients, (batch_size, self.ACTION_DIM))
 
@@ -196,5 +203,8 @@ class Actor_Critic:
             d = dict(zip(actor_model.inputs, batch_states))
             d[self.critic_gradient_holder] = gradients
             sess.run([self.actor_update_op], feed_dict=d)
+
+            self.update_target_models(actor_model, models[2])
+            self.update_target_models(critic_model, models[3])
 
 

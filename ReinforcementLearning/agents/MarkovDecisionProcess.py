@@ -7,7 +7,7 @@ class MDP:
     """Basic implementation of a finite Markov Decision Process Agent
     """
 
-    def __init__(self, num_states=None, num_actions=None, gamma=0.9, lr=1e-3, method='q-network', policy_type='epsilon-greedy', epsilon = 0.1, epsilon_decay=0.995, minimum_epsilon=0.1,heat=0.1, heat_decay=0.995, minimum_heat=0.1,alpha=0,
+    def __init__(self, num_states=None, num_actions=None, gamma=0.9, lr=1e-3, method='q-network', policy_type='epsilon-greedy', epsilon = 0.1, epsilon_decay=0.995, minimum_epsilon=0.1,heat=0.1, heat_decay=0.995, minimum_heat=0.1, stochastic=0, alpha=0,
                  transition_model=None, immediate_rewards=None, value_function=None, function_type=0, policy=None, init_Q_matrix=None, init_weights=None, q_model=None, v_model=None, target_models=[], tau=1e-3,
                  actor_model=None, critic_model=None, network_type='Q', folder_name='Default', log=None, state_formatter=None, random_state=None,sess=None):
         """
@@ -56,9 +56,10 @@ class MDP:
         self.Q_matrix = init_Q_matrix
         self.linear_weights = init_weights
         self.epsilon = epsilon
-        self.heat=heat
+        self.heat = heat
         self.minimum_epsilon = minimum_epsilon
         self.minimum_heat = minimum_heat
+        self.stochastic = stochastic
         self.gamma = gamma
         self.lr = lr
         self.alpha = alpha
@@ -119,7 +120,7 @@ class MDP:
     def make_decision(self, state):
         state = self.state_formatter(state)
 
-        if self.policy_type =='random':
+        if self.policy_type == 'random':
             return self.random_state.choice(range(self.num_actions))
 
         elif self.policy_type == 'epsilon-greedy':
@@ -143,7 +144,7 @@ class MDP:
                      q_values = np.array(self.actor_model.predict(state)).flatten()
             elif self.method == 'q-linear':
                 q_values = np.dot(self.linear_weights.T, state)
-            return np.argmax(q_values)
+            return np.argmax(q_values), None
 
         elif self.policy_type == 'softmax':
             if self.method in ['policy-network', 'actor-critc']:
@@ -162,13 +163,21 @@ class MDP:
             elif self.method == 'actor-critic':
                 if self.target_models is not []:
                     p = np.array(self.target_models[0].predict(state)).flatten()
+                    p = p+self.heat*np.ones(np.shape(p))
+                    p = p/np.sum(p)
                 else:
                     p = np.array(self.actor_model.predict(state)).flatten()
             print(p)
-            return self.random_state.choice(range(len(p)), p=p)
+            return self.random_state.choice(range(len(p)), p=p), p
 
+    def update_exploration_constants(self):
+        self.epsilon = max(self.epsilon*self.epsilon_decay,self.minimum_epsilon)
+        self.heat = max(self.heat*self.heat_decay, self.minimum_heat)
 
-    def update(self, state, action, reward, next_state, done=False, log=True, replay=True, batch_size=1, minibatch_size=1, dropout=0.2):
+    def update(self, state, action, reward, next_state, done=False, log=True, replay=True, batch_size=16, minibatch_size=1, dropout=0.2, policy=None):
+        if policy is not None and self.stochastic:
+            #action = policy
+            pass
         raw_state = state
         raw_next_state = next_state
         self.current_return += reward
@@ -258,11 +267,11 @@ class MDP:
 
         elif self.method == 'actor-critic':
             if self.random_state.rand() < replay:
-                episodes = self.log
+                episodes = self.buffer if len(self.log) == 0 else self.log
             else:
-                episodes = self.buffer.iloc[0, [0, 1, 2, 3]]
-            if done:
-                self.ac_toolkit.batch_train_actor_critic_model(models=[self.actor_model, self.critic_model] + self.target_models, episodes=episodes, iterations=1, batch_size=batch_size)
+                episodes = self.buffer if len(self.buffer) != 0 else self.log
+            if len(episodes) != 0:
+                self.ac_toolkit.batch_train_actor_critic_model(models=[self.actor_model, self.critic_model] + self.target_models, episodes=episodes, iterations=1, batch_size=min(len(episodes), batch_size))
 
         elif self.method == 'policy-network':
             pass
