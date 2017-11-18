@@ -14,7 +14,7 @@ def sig(a):
     return 1/(1 + np.exp(-a))
 
 def rbf(x,c,h):
-    return np.exp(-(x-c/h)**2)
+    return np.exp(-((x-c)/h)**2)
 
 
 def rbf_formatter(x, cs, hs):

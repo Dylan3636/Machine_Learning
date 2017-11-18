@@ -212,7 +212,7 @@ class MDP:
                     updates.append(update)
                     states.append(state)
                 #print(self.linear_weights, np.sum(np.dot(updates, states)))
-                self.linear_weights[:, action] += self.lr*(np.dot(updates, states))
+                self.linear_weights[:, action] += self.lr*(np.dot(updates, states)/len(updates))
 
             else:
                 future_q = np.max(np.dot(self.linear_weights.T, next_state))

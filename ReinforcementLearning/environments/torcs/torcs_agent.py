@@ -90,12 +90,7 @@ if not DISPLAY:
     matplotlib.use('Agg')
 
 
-# Preprocessing functions
-
-def action_encoder(action_index):
-    encoded_action = np.zeros(ACTION_DIM)
-    encoded_action[action_index] = 1
-    return encoded_action
+# helper functions
 
 def ou(action, theta, mu, sigma):
     """
@@ -148,12 +143,6 @@ def batch_observation_formatter(observations, actions=None):
 
 
 
-# Preprocessing
-# data = pd.read_csv('log_data_episode_5000.csv')
-# # dic = {100: 1, -10: -0.2, -1: -0.1 }
-# # data['Reward'] = data['Reward'].apply(lambda x: dic[x])
-# data['Previous State'] = data['Previous State'].apply(clean_state).values
-# data['Current State'] = data['Current State'].apply(clean_state).values
 
 # Neural Network imports
 import tensorflow as tf
@@ -333,7 +322,8 @@ def update_actor_critic_model(sess, models, episodes, tf_holders, iterations, ba
             previous_observations.append(previous_observation)
         #print('targets: ', targets)
         critic_model.train_on_batch(batch_observation_formatter(previous_observations, actions), np.array(targets))
-        gradients = np.squeeze(get_critic_gradients(sess, tf_holders[2], critic_model, previous_observations, np.array(actions)))
+        actions_for_grad = models[2].predict(batch_observation_formatter(previous_observations))
+        gradients = np.squeeze(get_critic_gradients(sess, tf_holders[2], critic_model, previous_observations, np.array(actions_for_grad)))
         #future_gradients = np.squeeze(get_critic_gradients(sess, tf_holders[2], critic_model, observations, np.array(actions)))
         #gradients = np.reshape(np.array(rewards) + np.array(id_mask)*GAMMA*future_gradients-gradients, (1, ACTION_DIM))
         #print('gradients: ', gradients)
