@@ -42,11 +42,12 @@ def evaluate_agent_in_environment(agent, env, num_episodes, num_timesteps, show_
             sleep(delay)
 
         for t in timesteps:
-            action = agent.make_decision(prev_observation)
+            action, policy = agent.make_decision(prev_observation)
             observation, reward, done, _ = env.step(action)
             reward = reward_formatter([observation, reward, done, t])
             if train:
-                agent.update(state=prev_observation, action=action, reward=reward, next_state=observation, done=done, log=False, replay=False)
+                agent.update(state=prev_observation, action=action, reward=reward, next_state=observation, done=done, log=True, replay=True, policy=policy)
+                agent.update_exploration_constants()
             current_return += reward
             prev_observation = observation.copy()
 
