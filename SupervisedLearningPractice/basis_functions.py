@@ -18,8 +18,8 @@ plt.show()
 y = np.array([1.1, 2.3, 2.9])
 X = np.array([0.8, 1.9, 3.1])
 
-def rbf(x, c, h):
-   return np.reshape(np.exp(-(x-c)**2/h**2), [len(x),1])
+#def rbf(x, c, h):
+#   return np.reshape(np.exp(-(x-c)**2/h**2), [len(x),1])
 
 def sig(x, v, b):
    return 1/(1+np.exp(-(np.dot(v,x)+b)))
@@ -27,8 +27,39 @@ def sig(x, v, b):
 def phi_poly(x, power):
    return np.concatenate([np.reshape(np.power(x, pw),[len(x),1]) for pw in range(power+1)], axis=1)
 
-def phi_rbf(x, cs, hs):
-   return np.concatenate([rbf(x, ch[0], ch[1]) for ch in zip(cs, hs)], axis=1)
+def rbf(x, c, h):
+    return np.exp(-((x-c)/h)**2)
+
+
+def rbf_formatter(x, cs, hs):
+    if np.shape(hs)[0] == 1:
+        hs = np.repeat(hs, len(cs), axis=0)
+    return np.concatenate([(rbf(x, c, h)) for (c, h) in zip(cs, hs)], axis=1)
+
+def rbf_mesh(X,bandwidth, h, x_min=None, x_max=None):
+    centres = get_rbf_centres(X, bandwidth, x_min, x_max)
+    return np.concatenate([rbf_formatter(X, cs, [h]) for cs in centres], axis=1)
+
+def get_rbf_centres(x, bandwidth, x_min=None, x_max=None):
+    if x_min is None:
+        x_maxs = np.max(x, 0)
+        x_mins = np.min(x, 0)
+    else:
+        if np.shape(x_min) == ():
+            x_mins=np.repeat(x_min, np.shape(x)[1])
+            x_maxs=np.repeat(x_max, np.shape(x)[1])
+        else:
+            x_maxs = x_max
+            x_mins = x_min
+    c = get_rbf_centres_between(x_mins, x_maxs, bandwidth)
+    return c
+
+def get_rbf_centres_between(low, high, bandwidth):
+    if np.shape(low) == ():
+        low = [low]
+        high = [high]
+    return [np.arange(x_min, x_max, bandwidth) for (x_max, x_min) in zip(high, low)]
+
 
 def fit_and_plot(phi_func, X, y,label=None ):
    Phi = phi_func(X)
