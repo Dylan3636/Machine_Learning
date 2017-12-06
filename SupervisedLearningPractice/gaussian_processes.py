@@ -13,122 +13,136 @@ from scipy.optimize import minimize
 
 class gaussian_process:
     
-    def __init__(self, X, y, kernel):
-        self.X=X
-        self.y=y
-        self.K = kernel(X, X)
-    def calculate_gp_parameters(self, X_prime, X=None, y=None, sig_y=0.1, kernel=None):
-        var_y = sig_y**2
-        K = kernel(X, X)
-        K_prime_L = kernel(X_prime, X)
-        K_prime_R = kernel(X, X_prime)
+    def calculate_gp_parameters(self, X_prime, sig_y=None):
+        X = self.X
+        y = self.y
+        kernel = self.kernel
+        self.hyperparams[2] = self.hyperparams[2] if sig_y is None else sig_y
+        var_y = self.hyperparams[2]**2
+        K = self.K
+        K_prime = kernel(X, X_prime)
         K_prime_prime = kernel(X_prime, X_prime)
         
         N = np.shape(y)[0]
         K_y = K + var_y*np.eye(N)
-        tmp_y = np.linalg.solve(K_y, y);
-        mu = np.dot(K_prime_L, tmp_y);
-        del(tmp_y)
-        tmp_R = np.linalg.solve(K_y, K_prime_R);
-        cov = K_prime_prime - np.dot(K_prime_L, tmp_R);
+        L = np.linalg.cholesky(K_y)        
+        alpha = np.linalg.solve(L.T,np.linalg.solve(L, self.y))
+        mu = np.dot(K_prime.T, alpha)
+        del(alpha)
+        v = np.linalg.solve(L, K_prime)
+        cov = K_prime_prime - np.dot(v.T, v)
         return mu, cov
     
-    def get_gp_error_bars(self,alpha,mu, var):
-        upper = mu + var
-        lower = mu - var
-        return upper, lower
     
-    def plot_gp_samples(x, n, mean, cov, color=[0.5,0.5,0.5]):
-        f = gaussian_random_samples(n, mean, cov);
-        for i in range(n):
-           plt.plot(x, f[:,i], color=color)
-  
     def cost_func(self, x):
         theta_f, theta_l, theta_y = x
-        print(theta_f, theta_l, theta_y)
+        #print(theta_f, theta_l, theta_y)
         N=np.size(self.K,0)
         self.kernel = rbf_kernel(np.sqrt(np.exp(theta_f)), np.sqrt(np.exp(theta_l))).kernel
         self.K = self.kernel(self.X, self.X)
         K_y = self.K + np.exp(theta_y)*np.eye(N)
-        
-        alpha = np.linalg.solve(K_y, self.y)
+        L = np.linalg.cholesky(K_y)        
+        alpha = np.linalg.solve(L.T,np.linalg.solve(L, self.y))
 
         fit_term = -0.5*np.dot(self.y.T, alpha)
-        complexity_term = -0.5*np.log(np.linalg.det(K_y))
+        complexity_term = -0.5*np.log(np.sum(np.diag(L)))
         constant = -0.5*N*np.log(2*np.pi)
         
         cost = fit_term + complexity_term + constant
-        
-        K_y_inv = np.linalg.inv(K_y)
-        deriv_main = lambda x: -0.5*np.trace(np.dot((np.dot(alpha, alpha.T)-K_y_inv),x))
-        
-        deriv_f = 0*self.K
-        deriv_l = 0*self.K*(np.log(self.K)-theta_f)
-        deriv_y = np.exp(theta_y)*np.eye(N)
-        gradients = np.array([deriv_main(deriv_f), deriv_main(deriv_l), deriv_main(deriv_y)] )       
-        print(fit_term , complexity_term , constant)
-        print(-cost, gradients)
+#        
+#        K_y_inv = np.linalg.inv(K_y)
+#        deriv_main = lambda x: -0.5*np.trace(np.dot((np.dot(alpha, alpha.T)-K_y_inv),x))
+#        
+#        deriv_f = 0*self.K
+#        deriv_l = 0*self.K*(np.log(self.K)-theta_f)
+#        deriv_y = np.exp(theta_y)*np.eye(N)
+#        gradients = np.array([deriv_main(deriv_f), deriv_main(deriv_l), deriv_main(deriv_y)] )       
+        #print(fit_term , complexity_term , constant)
+#        print(-cost, gradients)
         return -cost#, (gradients)
 
-    def train(self, init=[0.9,4,2]):
-        opt = {'maxiter': 2000, 'disp': True,'eps' : 1e-1}
-        init = np.log(init)
-        params = minimize(self.cost_func, init, method='L-BFGS-B', jac=False, options=opt)
-        print(params)
-        return np.sqrt(np.exp(params.x))
+    def train(self, X, y, kernel=None, hyperparams=[5,2,1], optimize=False):
+        self.X = X
+        self.y = y
+        self.kernel = rbf_kernel(hyperparams[0], hyperparams[1]).kernel if kernel is None else kernel
+        self.K = self.kernel(X, X)
+        if optimize:
+            opt = {'maxiter': 2000, 'disp': True}
+            init = np.log(hyperparams)
+            params = minimize(self.cost_func, init, method='L-BFGS-B', jac=False, options=opt)
+            hyperparams = np.sqrt(np.exp(params.x))
+            print(params)
+            self.hyperparams = hyperparams
+            self.kernel = rbf_kernel(hyperparams[0], hyperparams[1]).kernel
+        self.K = self.kernel(X, X)
+        return hyperparams
 
-
+    def batch_predict(self, X):
+        N,D=np.shape(np.matrix(X))
+        mus = np.zeros([N])
+        sigs = np.zeros([N])
+        log_pdfs = np.zeros([N])
+        for i in range(N):
+            m,s = self.calculate_gp_parameters(X[i,:])
+            mus[i] = m
+            sigs[i] = s
+            log_pdfs[i] = log_gaussian_pdf(m,m,s)
+        return mus, sigs, log_pdfs
     
     def cost_deriv(self, x):
         theta_f, theta_l, theta_y = x
         n=np.size(self.K,0)
         
+def get_gp_error_bars(alpha,mu, var):
+        upper = mu + var
+        lower = mu - var
+        return upper, lower
+    
+def plot_gp_samples(x, n, mean, cov, color=[0.5,0.5,0.5]):
+        f = gaussian_random_samples(n, mean, cov);
+        for i in range(n):
+           plt.plot(x, f[:,i], color=color)
         
-def demo(sig_f = 1.39,l=1.78, sig_y = 0.55,X=None, y =None):
+def gp_plots(sig_f = 1.39,l=1.78, sig_y = 0.55, X=None, y=None):
     n = 10
     n_w= 0
+    m=2000
+    x = np.array([-12, -10,-8,-6,-4, 4,6,8,10,12])#np.concatenate([np.linspace(-3, -2, n/2),np.linspace(2, 3, n/2)])
+    X = x if X is None else X
+    y =  np.sin(X) + 1*np.random.randn(n) if y is None else y
+    gp = gaussian_process()
+    params = gp.train(X,y, hyperparams = [10,4,2], optimize=True)
+    print(params)
+    sig_f, l, sig_y = params
     
-    if X is None:
-        X = np.random.rand(n)
-        y =  2*X**5 + 1*np.random.rand(n)
-    
-    
-    xs = np.linspace(-5, 5, 1000)
+    xs = np.linspace(-24, 24, m)
     #ys = 2*xs**5 + 0*np.rand([np.size(xs,0), 1]);
     
     X_prime = xs
-    kernel = rbf_kernel(sig_f, l).kernel
-    gp = gaussian_process( X, y, kernel)
-    fs = np.zeros([1000, n_w])
-    mu = np.zeros(1000)
-    cv = np.zeros(1000)
-    for i in range(1000):
-        m, s = gp.calculate_gp_parameters([X_prime[i]], X, y,sig_y, kernel);
+    fs = np.zeros([m, n_w])
+    mu = np.zeros(m)
+    cv = np.zeros(m)
+#    mu, cv = gp.calculate_gp_parameters(X_prime)
+
+    for i in range(m):
+        m, s = gp.calculate_gp_parameters([X_prime[i]]);
         fs[i,:]=(gaussian_random_samples(n_w, m, s))
         mu[i] = m
         cv[i] = s
-    for j in range(n_w):
-        plt.plot(xs, fs[:,j], color=[0.5,0.5,0.5])
-    [upper_ys, lower_ys]=gp.get_gp_error_bars(1, mu, cv);
+    
+    plt.scatter(X, y, c='r')
     p1=plt.plot(xs,mu,'black');
-        #shadedErrorBar(xs,mu,[upper_ys-mu])
-    p2=plt.plot(xs, upper_ys, 'red');
-    p3=plt.plot(xs, lower_ys, 'blue');
+    [upper_ys, lower_ys]=get_gp_error_bars(1, mu, np.diag(cv))
+    p2=plt.plot(xs, upper_ys, 'red')
+    p3=plt.plot(xs, lower_ys, 'blue')
+    fs=gaussian_random_samples(n_w, mu, cv)
+    for j in range(n_w):
+        plt.plot(xs, fs[:,j], color=None)
+    
     #plot_gp_samples(xs,n_w, mu, cv, [0.5,0.5,0.5])
         
-    plt.scatter(X, y, c='r');
-    #plt.legend([p1,p2,p3],{'mean', 'upper bound', 'lower bound'})
+    plt.legend({'mean', 'upper bound', 'lower bound'})
     plt.show()
 
-def optimize_demo():
-        n = 10
-        X = np.concatenate([np.linspace(-4, -2, n/2),np.linspace(2, 4, n/2)])
-        y =  2*X**3 + 1*np.random.randn(n)
-        kernel = rbf_kernel(1, 1).kernel
-        gp = gaussian_process(X,y, kernel)
-        params = gp.train([300,4,2])
-        print(params)
-        demo(params[0],params[1],params[2],X,y)
-
 if __name__ == '__main__':
-    optimize_demo()
+    gp_plots()
