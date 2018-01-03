@@ -177,16 +177,14 @@ def basic_actor_model():
     wheelSpinVel = Input(shape=INPUT_DIM[3])
 
     speed_rpm = concatenate([speed, rpm])
-    speedh1 = Dense(150, activation='linear', init='glorot_normal')(speed_rpm)
-    wheelSpinVelh1 = Dense(150, activation='linear', init='glorot_normal')(wheelSpinVel)
+    speedh1 = Dense(150, activation='linear')(speed_rpm)
+    wheelSpinVelh1 = Dense(150, activation='linear')(wheelSpinVel)
     combinedSpeed = add([speedh1, wheelSpinVelh1])
 
     focush1 = Dense(150, activation='linear')(focus)
     combined_layer = concatenate([focush1, combinedSpeed])
 
-    h2 = BatchNormalization()(combined_layer)
-
-    h3 = Dense(600, activation='relu')(h2)
+    h3 = Dense(600, activation='relu')(combined_layer)
 
     steering = Dense(1, activation='tanh', init='glorot_normal')(h3) #consider adding acceleration as an input to steering
     acceleration = Dense(1, activation='sigmoid', init='glorot_normal')(h3)
@@ -214,21 +212,20 @@ def basic_critic_model():
     wheelSpinVel = Input(shape=INPUT_DIM[3])
 
     speed_rpm = concatenate([speed, rpm])
-    speedh1 = Dense(150, activation='linear', init='glorot_normal')(speed_rpm)
-    wheelSpinVelh1 = Dense(150, activation='linear', init='glorot_normal')(wheelSpinVel)
+    speedh1 = Dense(150, activation='linear')(speed_rpm)
+    wheelSpinVelh1 = Dense(150, activation='linear')(wheelSpinVel)
     combinedSpeed = add([speedh1, wheelSpinVelh1])
 
     focush1 = Dense(150, activation='linear')(focus)
     combined_layer = concatenate([focush1, combinedSpeed])
 
-    h2 = BatchNormalization()(combined_layer)
-    h3 = Dense(600, activation='relu')(h2)
+    h3 = Dense(600, activation='relu')(combined_layer)
 
     action_h = BatchNormalization()(Dense(600, activation='linear', init='glorot_normal')(actions))
     combined = add([h3, action_h])
 
-    final = Dense(600, activation='relu')(BatchNormalization()(combined))
-    Q = Dense(2, activation='linear', init='glorot_normal')(BatchNormalization()(final))
+    final = Dense(600, activation='relu')((combined))
+    Q = Dense(2, activation='linear', init='glorot_normal')((final))
 
     model = Model(inputs=[focus, speed, rpm, wheelSpinVel, actions], outputs=[Q])
     model.compile(loss='mse', optimizer=Adam(lr=1e-3))
