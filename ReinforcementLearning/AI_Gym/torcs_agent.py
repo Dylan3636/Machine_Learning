@@ -59,7 +59,7 @@ INPUT_DIM = [[21], [3], [1], [4]]
 
 
 POLICY = 'OU'
-GAMMA = 0.99
+GAMMA = 0.8
 TAU = 1e-3
 LR = 1e-4
 EPSILON = 1.0
@@ -69,11 +69,12 @@ TARGET_MODEL = 1
 VANILLA = 0
 
 THETAS = np.array([0.6, 1.0])
-MEWS = np.array([0.0, 0.3])
+MEWS = np.array([0.0, 0.5])
 SIGMAS = np.array([0.3, 0.1])
 
 TRAIN = 0
-BATCH_SIZE = 1
+BATCH_SIZE =20 
+MINI_BATCH_SIZE=5
 ITERATIONS = 1
 
 NUM_STEPS = 50
@@ -117,8 +118,8 @@ def observation_formatter(observation, action=None):
     speedY = observation.speedY
     speedZ = observation.speedZ
     speed = np.reshape([speedX, speedY, speedZ], (1, INPUT_DIM[1][0]))
-    rpm = np.reshape(observation.rpm/100.0, (1, INPUT_DIM[2][0]))
-    wheelVel = np.reshape(observation.wheelSpinVel, (1, INPUT_DIM[3][0]))
+    rpm = np.reshape(observation.rpm, (1, INPUT_DIM[2][0]))
+    wheelVel = np.reshape(observation.wheelSpinVel/100, (1, INPUT_DIM[3][0]))
     if action is None:
         return [focus, speed, rpm, wheelVel]
     else:
@@ -140,10 +141,10 @@ def batch_observation_formatter(observations, actions=None):
         rpms.append(rpm)
         wheelVels.append(wheelVel)
     if tmp is None:
-        return [np.reshape(focuses, (BATCH_SIZE, INPUT_DIM[0][0])), np.reshape(speeds, (BATCH_SIZE, INPUT_DIM[1][0])), np.reshape(rpms, (BATCH_SIZE, INPUT_DIM[2][0])), np.reshape(wheelVels, (BATCH_SIZE, INPUT_DIM[3][0]))]
+        return [np.reshape(focuses, (-1, INPUT_DIM[0][0])), np.reshape(speeds, (-1, INPUT_DIM[1][0])), np.reshape(rpms, (-1, INPUT_DIM[2][0])), np.reshape(wheelVels, (-1, INPUT_DIM[3][0]))]
 
     else:
-        return [np.reshape(focuses, (BATCH_SIZE, INPUT_DIM[0][0])), np.reshape(speeds, (BATCH_SIZE, INPUT_DIM[1][0])), np.reshape(rpms, (BATCH_SIZE, INPUT_DIM[2][0])), np.reshape(wheelVels, (BATCH_SIZE, INPUT_DIM[3][0])), np.reshape(actions, (BATCH_SIZE, ACTION_DIM))]
+        return [np.reshape(focuses, (-1, INPUT_DIM[0][0])), np.reshape(speeds, (-1, INPUT_DIM[1][0])), np.reshape(rpms, (-1, INPUT_DIM[2][0])), np.reshape(wheelVels, (-1, INPUT_DIM[3][0])), np.reshape(actions, (-1, ACTION_DIM))]
 
 
 
@@ -162,6 +163,8 @@ from keras.models import Input
 from keras.models import Model
 from keras.models import Sequential
 from keras.layers import concatenate
+from keras.layers import add
+from keras.layers.normalization import BatchNormalization
 from keras.layers import Flatten
 from keras.layers import Dense
 from keras.layers import Dropout
@@ -183,15 +186,17 @@ def basic_actor_model():
     rpm = Input(shape=INPUT_DIM[2])
     wheelSpinVel = Input(shape=INPUT_DIM[3])
 
-    speedh1 = Dense(32, activation='linear', init='glorot_normal')(speed)
-    wheelSpinVelh1 = Dense(32, activation='linear', init='glorot_normal')(wheelSpinVel)
-    combinedSpeed = concatenate([speedh1, wheelSpinVelh1, rpm])
+    speed_rpm = concatenate([speed, rpm])
+    speedh1 = Dense(150, activation='linear', init='glorot_normal')(speed_rpm)
+    wheelSpinVelh1 = Dense(150, activation='linear', init='glorot_normal')(wheelSpinVel)
+    combinedSpeed = add([speedh1, wheelSpinVelh1])
 
-    focush1 = Dense(150, activation='relu', init='glorot_normal')(focus)
-    combinedSpeedh2 = Dense(150, activation='relu', init='glorot_normal')(combinedSpeed)
-    combined_layer = concatenate([focush1, combinedSpeedh2])
+    focush1 = Dense(150, activation='linear')(focus)
+    combined_layer = concatenate([focush1, combinedSpeed])
 
-    h3 = Dense(600, activation='relu', init='glorot_normal')(combined_layer)
+    h2 = BatchNormalization()(combined_layer)
+
+    h3 = Dense(600, activation='relu')(h2)
 
     steering = Dense(1, activation='tanh', init='glorot_normal')(h3) #consider adding acceleration as an input to steering
     acceleration = Dense(1, activation='sigmoid', init='glorot_normal')(h3)
@@ -213,17 +218,27 @@ def basic_critic_model():
     rpm = Input(shape=INPUT_DIM[2])
     wheelSpinVel = Input(shape=INPUT_DIM[3])
 
-    speedh1 = Dense(32, activation='linear')(speed)
-    wheelSpinVelh1 = Dense(32, activation='linear')(wheelSpinVel)
-    combinedSpeed = concatenate([speedh1, wheelSpinVelh1, rpm])
+    focus = Input(shape=INPUT_DIM[0])
+    speed = Input(shape=INPUT_DIM[1]) # vector of speedX, speedY and speedZ
+    rpm = Input(shape=INPUT_DIM[2])
+    wheelSpinVel = Input(shape=INPUT_DIM[3])
 
-    focush1 = Dense(64, activation='tanh')(focus)
-    combinedSpeedh2 = Dense(128, activation='linear')(combinedSpeed)
-    combined_layer = concatenate([focush1, combinedSpeedh2, actions])
+    speed_rpm = concatenate([speed, rpm])
+    speedh1 = Dense(150, activation='linear', init='glorot_normal')(speed_rpm)
+    wheelSpinVelh1 = Dense(150, activation='linear', init='glorot_normal')(wheelSpinVel)
+    combinedSpeed = add([speedh1, wheelSpinVelh1])
 
-    h3 = Dense(512, activation='relu')(combined_layer)
+    focush1 = Dense(150, activation='linear')(focus)
+    combined_layer = concatenate([focush1, combinedSpeed])
 
-    Q = Dense(2, activation='linear', init='glorot_normal')(h3)
+    h2 = BatchNormalization()(combined_layer)
+    h3 = Dense(600, activation='relu')(h2)
+
+    action_h = BatchNormalization()(Dense(600, activation='linear', init='glorot_normal')(actions))
+    combined = add([h3, action_h])
+
+    final = Dense(600, activation='relu')(BatchNormalization()(combined))
+    Q = Dense(2, activation='linear', init='glorot_normal')(BatchNormalization()(final))
 
     model = Model(inputs=[focus, speed, rpm, wheelSpinVel, actions], outputs=[Q])
     model.compile(loss='mse', optimizer=Adam(lr=1e-3))
@@ -292,7 +307,7 @@ def update_actor_critic_model(sess, models, episodes, tf_holders, iterations, ba
         deltas = []
         rewards=[]
         id_mask = []
-        for _, frame in episodes.sample(batch_size, random_state=RANDOM_STATE).iterrows():
+        for _, frame in episodes.sample(min(batch_size,len(episodes)), random_state=RANDOM_STATE).iterrows():
             previous_observation, action, reward, observation, done = frame
 
             state = observation_formatter(previous_observation, action)
@@ -333,12 +348,12 @@ def update_actor_critic_model(sess, models, episodes, tf_holders, iterations, ba
         #print('targets: ', targets)
         critic_model.train_on_batch(batch_observation_formatter(previous_observations, actions), np.array(targets))
         gradients = np.squeeze(get_critic_gradients(sess, tf_holders[2], critic_model, previous_observations, np.array(actions)))
-        future_gradients = np.squeeze(get_critic_gradients(sess, tf_holders[2], critic_model, observations, np.array(actions)))
+        #future_gradients = np.squeeze(get_critic_gradients(sess, tf_holders[2], critic_model, observations, np.array(actions)))
         #gradients = np.reshape(np.array(rewards) + np.array(id_mask)*GAMMA*future_gradients-gradients, (1, ACTION_DIM))
         #print('gradients: ', gradients)
 
         d1 = dict(zip(actor_model.inputs, batch_observation_formatter(previous_observations)))
-        d1[tf_holders[0]] = np.reshape(gradients, [1, ACTION_DIM])
+        d1[tf_holders[0]] = np.reshape(gradients, [-1, ACTION_DIM])
         d = dict( d1)
         sess.run([tf_holders[1]], feed_dict=d)
 
@@ -397,26 +412,32 @@ gradient_op = get_gradient_operation(critic_model)
 sess.run(tf.global_variables_initializer())
 buffer = pd.DataFrame(columns=['previous observation', 'action', 'reward', 'observation', 'done'])
 
-for episode in range(400):
+def safe_norm(x):
+    xmax = np.max(x)
+    return np.linalg.norm(x / xmax) * xmax
+
+for episode in range(4000):
     print('Episode: ', episode)
-    if episode %5 ==0:
+    if episode %1 ==0:
         ob = env.reset(relaunch=True)  # with torcs relaunch (avoid memory leak bug in torcs)
     else:
         ob = env.reset()
-    for move in range(1000):
+    for move in range(10000):
         if TARGET_MODEL:
             action = act(target_actor_model, observation_formatter(ob))
         else:
             action = act(actor_model, observation_formatter(ob))
         action = action.flatten()
         new_ob, reward, done, _ = env.step(action)
-        reward = reward
+        reward = reward/400
         print('\nq-value: ', target_critic_model.predict(observation_formatter(ob, action)))
         print('reward: ', reward, '\n')
+        if np.isnan(reward):
+            break
         buffer.loc[len(buffer), :] = [ob, action, reward, new_ob, done]
-        ob = new_ob
         update_actor_critic_model(sess, [actor_model, critic_model, target_actor_model, target_critic_model], buffer,
                                   [action_gradient_holder, update_op, gradient_op], ITERATIONS, BATCH_SIZE)
+        ob = new_ob
         EPSILON = max(EPSILON*EPSILON_DECAY, MINIMUM_EPSILON)
         #print('\nepsilon: ', EPSILON, '\n')
         if done:
