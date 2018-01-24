@@ -22,7 +22,7 @@ def log_gaussian_pdf(x, mu, cov):
     else:
         D= D[0]
         L = np.linalg.cholesky(cov)
-        determinant = np.sum(np.diag(L))
+        determinant = np.exp(np.sum(np.log(np.diag(L))))
         L_inv = np.linalg.solve(L, np.eye(D))
         cov_inv = np.dot(L_inv.T, L_inv)
         tmp = np.dot(cov_inv,diff)
@@ -43,10 +43,9 @@ def gaussian_random_samples(n, mu, cov):
 
 def gaussian_transform(x, mu, cov):
     try:
-        U,S,V = np.linalg.svd(cov)
-        A = np.dot(U,np.diag(np.sqrt(S)))
+        A = np.linalg.cholesky(cov)
     except:
-        A = cov
+        A = np.sqrt(cov)
     rot_x = np.dot(A,x)
     new_x = np.add(rot_x, np.reshape(mu, [-1,1]))
     return new_x
@@ -56,17 +55,18 @@ def plot_2D_gaussian_scatter_PCA(n, mu, cov):
         M = np.shape(mu)[0]
         smps = np.random.randn(M, n)  
         U,S,V = np.linalg.svd(cov)
-        print(V.shape)
-        A =np.dot(U,np.diag(np.sqrt(S)))[:,0:2]
-        rot_x = np.dot(A.T,smps)
-        x = np.add(rot_x, np.reshape(np.dot(np.transpose(mu), U[:,0:2]), [-1,1]))
-        plt.scatter(x[0,:],x[1,:])
+        A =np.dot(U,np.diag(np.sqrt(S)))
+        rot_x = np.dot(np.dot(A,smps).T,V[:,0:2])
+        x = np.add(rot_x, np.reshape(np.dot(np.transpose(mu), V[:,0:2]), [1,-1]))
+        plt.scatter(x[:,0],x[:,1])
     else:
         smps = n
         U,S,V = np.linalg.svd(smps)
-        A = U[:,0:2]
-        x= np.add(np.dot(A.T,np.subtract(smps,np.reshape(mu, [-1,1]))), np.dot(A.T,mu).reshape([-1,1]))
-        plt.scatter(x[0,:],x[1,:])
+        A =np.dot(U,np.diag(np.sqrt(S)))
+        cntrd = np.subtract(smps,np.reshape(mu, [-1,1]))
+        rot_x = np.dot(np.dot(A,cntrd).T,V[:,0:2])
+        x= np.add(np.dot(mu.T, V[:,0:2]).reshape([1,-1]), A)
+        plt.scatter(x[:,0],x[:,1])
         
 def plot_1D_gaussian_line_PCA(n, mu, cov):
     
@@ -74,21 +74,26 @@ def plot_1D_gaussian_line_PCA(n, mu, cov):
         M = np.shape(mu)[0]
         smps = np.random.randn(M, n)  
         U,S,V = np.linalg.svd(cov)
-        A =np.dot(U,np.diag(np.sqrt(S)))[:,0:1]
-        rot_x = np.dot(A.T,smps)
-        x = np.add(rot_x, np.reshape(np.dot(np.transpose(mu), U[:,0:1]), [-1,1]))
+        A =np.dot(U,np.diag(np.sqrt(S)))
+        rot_x = np.dot(np.dot(A,smps).T,V[:,0:1])
+        mu = np.reshape(np.dot(np.transpose(mu), V[:,0:1]), [1,-1])
+        x = np.add(rot_x, mu).ravel()
         x = np.sort(x)
-        mu = np.mean(x)
         s = np.std(x)
+        mu = mu.ravel()[0]
         p = np.exp(log_gaussian_pdf(x, mu, s)[0])
         print(mu, s)
         plt.plot(x.ravel(),p)
-#    else:
-#        smps = n
-#        U,S,V = np.linalg.svd(smps)
-#        A = U[:,0:1]
-#        x= np.add(np.dot(A.T,np.subtract(smps,np.reshape(mu, [-1,1]))), np.dot(A.T,mu).reshape([-1,1]))
-#        plt.scatter(x[0,:],x[1,:])
+    else:
+        smps = n
+        U,S,V = np.linalg.svd(smps)
+        A = V[:,0:1]
+        x= np.add(np.dot(np.subtract(smps,np.reshape(mu, [1,-1])).T, A), np.dot(mu.T, A).reshape([1,-1])).ravel()
+        x = np.sort(x)
+        s = np.std(x)
+        mu = mu.ravel()[0]
+        p = np.exp(log_gaussian_pdf(x, mu, s)[0])
+        plt.plot(x.ravel(),p)
 
     
 

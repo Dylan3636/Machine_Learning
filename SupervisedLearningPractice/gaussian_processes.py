@@ -41,7 +41,7 @@ class gaussian_process:
         self.kernel = rbf_kernel(np.sqrt(np.exp(theta_f)), np.sqrt(np.exp(theta_l))).kernel
         self.K = self.kernel(self.X, self.X)
         K_y = self.K + np.exp(theta_y)*np.eye(N)
-        L = np.linalg.cholesky(K_y)        
+        L = np.linalg.cholesky(K_y)
         alpha = np.linalg.solve(L.T,np.linalg.solve(L, self.y))
 
         fit_term = -0.5*np.dot(self.y.T, alpha)
@@ -94,8 +94,9 @@ class gaussian_process:
         n=np.size(self.K,0)
         
 def get_gp_error_bars(alpha,mu, var):
-        upper = mu + var
-        lower = mu - var
+        error = alpha*np.sqrt(var)
+        upper = mu + error
+        lower = mu - error
         return upper, lower
     
 def plot_gp_samples(x, n, mean, cov, color=[0.5,0.5,0.5]):
@@ -109,9 +110,9 @@ def gp_plots(sig_f = 1.39,l=1.78, sig_y = 0.55, X=None, y=None):
     m=2000
     x = np.array([-12, -10,-8,-6,-4, 4,6,8,10,12])#np.concatenate([np.linspace(-3, -2, n/2),np.linspace(2, 3, n/2)])
     X = x if X is None else X
-    y =  np.sin(X) + 1*np.random.randn(n) if y is None else y
+    y =  np.sin(X) + 5*np.random.randn(n) if y is None else y
     gp = gaussian_process()
-    params = gp.train(X,y, hyperparams = [10,4,2], optimize=True)
+    params = gp.train(X,y, hyperparams = [10,10,2], optimize=True)
     print(params)
     sig_f, l, sig_y = params
     
@@ -132,10 +133,9 @@ def gp_plots(sig_f = 1.39,l=1.78, sig_y = 0.55, X=None, y=None):
     
     plt.scatter(X, y, c='r')
     p1=plt.plot(xs,mu,'black');
-    [upper_ys, lower_ys]=get_gp_error_bars(1, mu, np.diag(cv))
+    [upper_ys, lower_ys]=get_gp_error_bars(1, mu,cv)
     p2=plt.plot(xs, upper_ys, 'red')
     p3=plt.plot(xs, lower_ys, 'blue')
-    fs=gaussian_random_samples(n_w, mu, cv)
     for j in range(n_w):
         plt.plot(xs, fs[:,j], color=None)
     

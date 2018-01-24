@@ -8,7 +8,7 @@ env = gym.make(env_name)
 state_dim = env.observation_space.shape[0]
 action_dim = env.action_space.n
 actions = range(env.action_space.n)
-initial_weights = np.random.rand(15, 2)
+initial_weights = np.random.rand(25, 2)
 
 def sig(a):
     return 1/(1 + np.exp(-a))
@@ -24,9 +24,9 @@ def rbf_formatter(x, cs, hs):
 
 def state_formatter(observations):
     x, x_dot, theta, theta_dot = observations
-    x_rbf = rbf_formatter(x, cs=[-3, -2, -1, 0, 1, 2, 3], hs=[2])
-    theta_rbf = rbf_formatter(theta, cs=[-0.2, -0.1, 0, 0.1, 0.2], hs=[0.2])
-    return np.concatenate([[1], x_rbf, [x_dot/10], theta_rbf, [theta_dot/10]])
+    x_rbf = rbf_formatter(x, cs=[-3, -2.5, -2, -1.5, -1, -0.5, 0, 0.5, 1,1.5, 2,2.5, 3], hs=[1])
+    theta_rbf = rbf_formatter(theta, cs=[-0.2, -0.15, -0.1,-0.05, 0,0.05, 0.1, 0.15, 0.2], hs=[0.1])
+    return np.concatenate([[1], x_rbf, [x_dot], theta_rbf, [theta_dot/10]])
 
 
 def reward_formatter(observation):
@@ -45,5 +45,5 @@ visualize = np.zeros(num_episodes)
 for i in range(0, num_episodes, 50):
     visualize[i] = 1
 
-mdp = MDP(num_actions=env.action_space.n, state_formatter=state_formatter, init_weights=initial_weights,lr=5e-3, alpha=0, method='q-linear', epsilon=1.0, gamma=0.99, epsilon_decay=0.9997, minimum_epsilon=0)
+mdp = MDP(num_actions=env.action_space.n, state_formatter=state_formatter, init_weights=initial_weights,lr=1e-2, alpha=0, method='q-linear', epsilon=1.0, gamma=0.99, epsilon_decay=0.9997, minimum_epsilon=0)
 evaluate_agent_in_environment(mdp, env, num_episodes, num_timesteps=400, show_env=list(visualize), train=1, reward_formatter=reward_formatter, delay=0.05)

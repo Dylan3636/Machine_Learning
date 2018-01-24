@@ -121,12 +121,12 @@ class MDP:
         state = self.state_formatter(state)
 
         if self.policy_type == 'random':
-            return self.random_state.choice(range(self.num_actions))
+            return self.random_state.choice(range(self.num_actions)), None
 
         elif self.policy_type == 'epsilon-greedy':
 
             if self.random_state.rand() <= self.epsilon:
-                return self.random_state.choice(range(self.num_actions))
+                return self.random_state.choice(range(self.num_actions)),None
 
             if self.method in ['q-network', 'policy-network']:
                 if self.target_models != []:
@@ -144,6 +144,7 @@ class MDP:
                      q_values = np.array(self.actor_model.predict(state)).flatten()
             elif self.method == 'q-linear':
                 q_values = np.dot(self.linear_weights.T, state)
+                print(q_values, state)
             return np.argmax(q_values), None
 
         elif self.policy_type == 'softmax':
@@ -204,9 +205,8 @@ class MDP:
         elif self.method == 'q-linear':
             episodes = self.buffer if len(self.log) == 0 else self.log
             if self.random_state.random_sample() < replay:
-                updates = []
-                states = []
-                for _, frame in episodes.sample(min(len(episodes), batch_size)).iterrows():
+                batch = min(len(episodes), batch_size)
+                for _, frame in episodes.sample(batch).iterrows():
                     state, action, next_state, reward, done = frame.iloc(axis=1)[0:5]
                     state = self.state_formatter(state)
                     next_state = self.state_formatter(next_state)
@@ -217,11 +217,10 @@ class MDP:
                     else:
                         future_q = np.max(np.dot(self.linear_weights.T, next_state))
                         target = reward + self.gamma * future_q
-                    update = target-q[action]
-                    updates.append(update)
-                    states.append(state)
-                #print(self.linear_weights, np.sum(np.dot(updates, states)))
-                self.linear_weights[:, action] += self.lr*(np.dot(updates, states)/len(updates))
+                    tmp = self.linear_weights[:, action]
+                    tmp[0] = 0
+                    val = self.lr*target*state/batch-0.01*tmp
+                    self.linear_weights[:, action] += val.ravel()
 
             else:
                 future_q = np.max(np.dot(self.linear_weights.T, next_state))

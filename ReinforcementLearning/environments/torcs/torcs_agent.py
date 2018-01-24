@@ -343,7 +343,7 @@ def update_actor_critic_model(sess, models, episodes, tf_holders, iterations, ba
 
         d1 = dict(zip(actor_model.inputs, batch_observation_formatter(previous_observations)))
         d1[tf_holders[0]] = np.reshape(gradients, [-1, ACTION_DIM])
-        d = dict( d1)
+        d = dict(d1)
         sess.run([tf_holders[1]], feed_dict=d)
 
         if TARGET_MODEL:

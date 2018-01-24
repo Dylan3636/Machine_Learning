@@ -11,19 +11,22 @@ class rbf_kernel:
         self.l = l
     
     def kernel(self, X, X_prime):
-        X=np.matrix(X)
-        X_prime = np.matrix(X_prime)
+        X = np.array(X)
+        X_prime = np.array(X_prime)
         N = np.size(X,0)
-        M = np.size(X_prime, 0)
-        K = np.zeros([N, M])
-        try:
-            np.size(X,1)
-        except:
+        M = np.size(X_prime, 0)        
+
+        if X.ndim != 1:
+            X=np.matrix(X)
+        else:
             X=np.reshape(X,[N,1])
-        try:
-            np.size(X_prime,1)
-        except:
+
+        if X_prime.ndim > 1:
+            X_prime = np.matrix(X_prime)
+        else:
             X_prime=np.reshape(X_prime,[M,1])
+
+        K = np.zeros([N, M])
            
         for i in range(N):
             for j in range(M): 
