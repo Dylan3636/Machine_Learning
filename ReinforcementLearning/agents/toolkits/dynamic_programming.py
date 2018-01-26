@@ -62,6 +62,8 @@ def value_iteration(transition_probabilities, immediate_rewards, actions, gamma=
 def policy_evaluation(policy, transition_model, immediate_rewards, actions, gamma=0.9, theta=0.1, terminal_states=[],
                       in_place=True):
     num_states = np.size(immediate_rewards, 0)
+    repeat = 3 - np.ndim(immediate_rewards)
+
     if type(actions) is int:
         num = actions
         actions = []
@@ -79,8 +81,14 @@ def policy_evaluation(policy, transition_model, immediate_rewards, actions, gamm
                 continue
             tmp = []
             for j in actions[i]:
+                if repeat == 1:
+                    ir = np.repeat([immediate_rewards], num_states, axis =0)
+                elif repeat == 2:
+                    ir = np.repeat([immediate_rewards], np.size(actions[i],0), axis = 0)
+                    ir = np.repeat([ir], num_states, axis =0)
+
                 transition_probabilities = transition_model(j, False)
-                tmp.append((policy[i][j] * np.dot(transition_probabilities[i], (immediate_rewards + gamma * values))))
+                tmp.append((policy[i][j] * transition_probabilities[i][j] * ir[i][j] + gamma * values))
             new_v = np.sum(tmp)
             delta = max(delta, values[i] - new_v)
             if not in_place:
