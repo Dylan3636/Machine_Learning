@@ -23,14 +23,33 @@ def value_iteration(transition_probabilities, immediate_rewards, actions, gamma=
         Values:[-5.5112429  4.0951   ], Policy:[array([ 1.,  0.]), array([ 1.,  0.])]
 
     """
-    num_states = np.size(immediate_rewards, 0)
+    num_states = np.size(transition_probabilities(0,False), 0)
+    repeat = 3 - np.ndim(immediate_rewards)
+
     if type(actions) is int:
         num = actions
         actions = []
-        for _ in range(num):
+        for _ in range(num_states):
             actions.append(range(0, num))
+
     values = np.random.rand(num_states)
-    values[-1] = immediate_rewards[-1]
+    #values[-1] = immediate_rewards[-1]
+    if repeat == 1:
+        # R(s,a) --> R(s,a,s)
+        sas = np.repeat([immediate_rewards], num_states, axis = 0)
+        ir = lambda i : sas[i]
+        repeat = 0
+    elif repeat==2:
+        sas = []
+        for i in range(num_states):
+                # R(s) --> R(s,a,s)
+                tmp = np.repeat([immediate_rewards], np.size(actions[i],0), axis = 0)
+                sas.append(tmp)
+        ir = lambda i : sas[i]
+        repeat = 0
+    else:
+        ir = lambda i: immediate_rewards[i]
+
     if in_place:
         new_values = np.array([num_states, 1])
     if initial_policy is None:
@@ -39,16 +58,22 @@ def value_iteration(transition_probabilities, immediate_rewards, actions, gamma=
             policy.append(np.eye(1, len(state_actions)))
     else:
         policy = initial_policy
+    stored = False
+    tp_ir = []
     while True:
         delta = -np.inf
         for i in range(0, num_states):
             if i in terminal_states:
                 continue
-            tmp = np.dot(transition_probabilities(i, True), (immediate_rewards + gamma * values))
+
+            if not stored:
+                tp_ir.append(np.sum(transition_probabilities(i, True) * ir(i), 1))
+
+            tmp = tp_ir[i] + np.dot(transition_probabilities(i, True), ( gamma * values))
             new_v = np.max(tmp)
             policy[i] = np.zeros(len(actions[i]))
             policy[i][np.argmax(tmp)] = 1
-            delta = max(delta, values[i] - new_v)
+            delta = max(delta, np.abs(values[i] - new_v))
             if not in_place:
                 new_values[i] = new_v
             else:
@@ -57,21 +82,23 @@ def value_iteration(transition_probabilities, immediate_rewards, actions, gamma=
             values = new_values
         if delta < theta:
             break
+        stored = True
     return values, policy
 
 def policy_evaluation(policy, transition_model, immediate_rewards, actions, gamma=0.9, theta=0.1, terminal_states=[],
                       in_place=True):
-    num_states = np.size(immediate_rewards, 0)
+
+    num_states = np.size(transition_model(0,False), 0)
     repeat = 3 - np.ndim(immediate_rewards)
 
     if type(actions) is int:
         num = actions
         actions = []
-        for _ in range(num):
-            actions.append(range(0, num))
+        for _ in range(num_states):
+            actions.append(list(range(0, num)))
 
     values = np.random.rand(num_states)
-    values[-1] = immediate_rewards[-1]
+    #values[-1] = immediate_rewards[-1]
     if in_place:
         new_values = np.array([num_states, 1])
     while True:
@@ -79,18 +106,21 @@ def policy_evaluation(policy, transition_model, immediate_rewards, actions, gamm
         for i in range(0, num_states):
             if i in terminal_states:
                 continue
-            tmp = []
+            new_v = 0
             for j in actions[i]:
+
                 if repeat == 1:
+                    # R(s,a) --> R(s,a,s)
                     ir = np.repeat([immediate_rewards], num_states, axis =0)
+                    repeat = 0
                 elif repeat == 2:
+                    # R(s) --> R(s,a,s)
                     ir = np.repeat([immediate_rewards], np.size(actions[i],0), axis = 0)
                     ir = np.repeat([ir], num_states, axis =0)
 
                 transition_probabilities = transition_model(j, False)
-                tmp.append((policy[i][j] * transition_probabilities[i][j] * ir[i][j] + gamma * values))
-            new_v = np.sum(tmp)
-            delta = max(delta, values[i] - new_v)
+                new_v += policy[i][j] * np.dot(transition_probabilities[i], (ir[i][j] + (gamma * values)))
+            delta = max(delta, np.abs(values[i] - new_v))
             if not in_place:
                 new_values[i] = new_v
             else:
@@ -125,12 +155,31 @@ def policy_iteration(initial_policy, transition_probabilities, immediate_rewards
     >>> print('Values:{val[0]}, Policy:{val[1]}'.format(val = MDP.policy_iteration(policy, transition_model, immediate_rewards, 2, theta=1e-10)))
         Values:[-5.52905259  4.0951    ], Policy:[[ 1.  0.] [ 1.  0.]]
     """
-    num_states = np.size(immediate_rewards, 0)
+    num_states = np.size(transition_probabilities(0,False), 0)
+    repeat = 3 - np.ndim(immediate_rewards)
+
     if type(actions) is int:
         num = actions
         actions = []
-        for _ in range(num):
+        for _ in range(num_states):
             actions.append(range(0, num))
+
+    if repeat == 1:
+        # R(s,a) --> R(s,a,s)
+        sas = np.repeat([immediate_rewards], num_states, axis = 0)
+        ir = lambda i : sas[i,:,:]
+        repeat = 0
+    elif repeat==2:
+        sas = []
+        for i in range(num_states):
+                # R(s) --> R(s,a,s)
+                tmp = np.repeat([immediate_rewards], np.size(actions[i], 0), axis = 0)
+                sas.append(tmp)
+        ir = lambda i : sas[i]
+        repeat = 0
+    else:
+        ir = lambda i: immediate_rewards[i,:,:]
+
 
     if initial_policy is None:
         policy = []
@@ -138,19 +187,26 @@ def policy_iteration(initial_policy, transition_probabilities, immediate_rewards
             policy.append(np.eye(1, len(state_actions)))
     else:
         policy = initial_policy
+    stored = False
+    tp_ir = []
     while True:
         policy_stable = True
-        values = MDP.policy_evaluation(policy, transition_probabilities, immediate_rewards, actions, gamma,
+        values = policy_evaluation(policy, transition_probabilities, immediate_rewards, actions, gamma,
                                        theta, terminal_states, in_place)  # Policy Evaluation
         for i in range(0, num_states):
             b = np.argmax(
                 policy[i])  # policy should have an indicator vector for each state indicating the action to be taken
             policy[i] = np.zeros(len(actions[i]))
-            ind = np.argmax(
-                np.dot(transition_probabilities([i], True), (immediate_rewards[i] + gamma * values)))
+
+            if not stored:
+                 tp_ir.append(np.sum(transition_probabilities(i, True) * ir(i), 1))
+            tmp = tp_ir[i] + np.dot(transition_probabilities(i, True), ( gamma * values))
+
+            ind = np.argmax(tmp)
             policy[i][ind] = 1
             if ind != b:
                 policy_stable = False
+            stored
         if policy_stable:
             break
 
