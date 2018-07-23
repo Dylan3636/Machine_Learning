@@ -117,3 +117,23 @@ def plot_2D_gaussian_contour(npts, mu, cov):
 def plot_2D_gaussian_scatter(n, mu, cov):
     x = gaussian_random_samples(n, mu, cov)    
     plt.scatter(x[0,:],x[1,:])
+
+def get_sigma_points(mu, cov, alpha, kappa):
+    n = np.size(mu, 0)
+    chai = np.zeros([2*n + 1, n])
+    chai[0, :] = mu
+    L=np.linalg.cholesky(cov)
+    for i in range(2*n):
+        lmbda = (alpha**2)*(n+kappa)-n
+        if i<n:
+            chai[i+1, :] = mu + np.sqrt(n + lmbda)*L[i,:]
+        else:
+            chai[i+1, :] = mu - np.sqrt(n + lmbda)*L[i-n,:]
+    return chai
+
+def plot_sigma_points_2D(mu, cov, alpha, kappa):
+    chai = get_sigma_points(mu, cov, alpha, kappa)
+    plt.scatter(chai[:, 0], chai[:, 1])
+    
+
+
