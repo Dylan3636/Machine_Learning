@@ -131,9 +131,19 @@ def get_sigma_points(mu, cov, alpha, kappa):
             chai[i+1, :] = mu - np.sqrt(n + lmbda)*L[i-n,:]
     return chai
 
-def plot_sigma_points_2D(mu, cov, alpha, kappa):
+def plot_2D_sigma_points(mu, cov, alpha, kappa):
     chai = get_sigma_points(mu, cov, alpha, kappa)
     plt.scatter(chai[:, 0], chai[:, 1])
     
+def get_2D_confidence_region(n, mu, cov, alpha=0.05):
+    r = np.sqrt(-2*np.log(alpha))
+    #sigmas = np.array(cov).flatten()
+    #rho = sigmas[2]/np.sqrt(sigmas[1]*sigmas[-1])
+    M = np.linalg.cholesky(cov)
+    thetas = np.linspace(0, 2*np.pi, n)
+    pts = np.dot(r*np.column_stack([np.cos(thetas), np.sin(thetas)]), M) + mu
+    return pts
 
-
+def plot_2D_confidence_interval(n, mu, cov, alpha=0.05):
+    pts = get_2D_confidence_region(n, mu, cov, alpha)
+    plt.plot(pts[:, 0], pts[:, 1])
